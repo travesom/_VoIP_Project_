@@ -44,9 +44,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IProtocol.cs" />
+    <Compile Include="NVP.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="VNCP.cs" />
+    <Compile Include="ULP.cs" />
+    <Compile Include="UserAccount.cs" />
+    <Compile Include="UserContactList.cs" />
+    <Compile Include="NVCP.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

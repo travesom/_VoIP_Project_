@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 using System.Threading;
+using System.Security.Cryptography;
 
 
 namespace Telefon_serwer
@@ -12,16 +13,16 @@ namespace Telefon_serwer
     class SubscriberInfo
     {
         private IPAddress address;
-        private OperStatus status;
+        private nvcpOperStatus status;
         private DateTime time;
 
         public IPAddress Address { get { return address; } set { address = value; } }
-        public OperStatus Status { get { return status; } set { status = value; } }
+        public nvcpOperStatus Status { get { return status; } set { status = value; } }
         public DateTime Time { get { return time; } set { time = value; } }
 
         public SubscriberInfo() { }
 
-        public SubscriberInfo(IPAddress addr, OperStatus status, DateTime time)
+        public SubscriberInfo(IPAddress addr, nvcpOperStatus status, DateTime time)
         {
             this.address = addr;
             this.status = status;
@@ -29,11 +30,12 @@ namespace Telefon_serwer
         }
     }
 
-    class SubscriberList
+    class ActiveSubscriberList
     {
+        //sublist - key is user login
         public Dictionary<string, SubscriberInfo> subList;
 
-        public SubscriberList()
+        public ActiveSubscriberList()
         {
             subList = new Dictionary<string, SubscriberInfo>();
         }
@@ -67,18 +69,11 @@ namespace Telefon_serwer
             }
         }
 
-        public SubscriberInfo getInfo(string login)
+        public SubscriberInfo this[string login]
         {
-            SubscriberInfo si1 = new SubscriberInfo();
-            try
-            { 
-                si1 = subList[login];
-                return si1;
-            }
-            catch (Exception ex)
+            get
             {
-                Console.WriteLine(ex.Message);
-                return si1;
+                return subList[login];
             }
         }
     }
@@ -102,13 +97,30 @@ namespace Telefon_serwer
                 Console.WriteLine(ex.Message);
             }
             */
-            SubscriberList slist = new SubscriberList();
-            slist.add("Marcin", new SubscriberInfo(IPAddress.Parse("192.168.1.12"), OperStatus.READY, DateTime.Now));
-            slist.add("Lukasz", new SubscriberInfo(IPAddress.Parse("192.168.1.12"), OperStatus.BUSY, DateTime.Now));
-            slist.add("Szymon", new SubscriberInfo(IPAddress.Parse("192.168.1.12"), OperStatus.READY, DateTime.Now));
-            slist.add("Juliusz", new SubscriberInfo(IPAddress.Parse("192.168.1.12"), OperStatus.READY, DateTime.Now));
+            ActiveSubscriberList aslist = new ActiveSubscriberList();
+            aslist.add("Marcin", new SubscriberInfo(IPAddress.Parse("192.168.1.12"), nvcpOperStatus.READY, DateTime.Now));
+            aslist.add("Lukasz", new SubscriberInfo(IPAddress.Parse("192.168.1.12"), nvcpOperStatus.BUSY, DateTime.Now));
+            aslist.add("Szymon", new SubscriberInfo(IPAddress.Parse("192.168.1.12"), nvcpOperStatus.READY, DateTime.Now));
+            aslist.add("Juliusz", new SubscriberInfo(IPAddress.Parse("192.168.1.12"), nvcpOperStatus.READY, DateTime.Now));
 
+            UserAccountList UAlist = new UserAccountList();
+            UAlist.createAccount("Marcin", new SHA1CryptoServiceProvider().ComputeHash(Encoding.ASCII.GetBytes("0x123456")).ToString());
+            UAlist.createAccount("Lukasz", new SHA1CryptoServiceProvider().ComputeHash(Encoding.ASCII.GetBytes("0xabcdef")).ToString());
+            UAlist.createAccount("Juliusz", new SHA1CryptoServiceProvider().ComputeHash(Encoding.ASCII.GetBytes("0x123abc")).ToString());
+            UAlist.changeNickName("Lukasz", "Lucas");
+            UAlist.changeNickName("Juliusz", "Julek");
 
+            UserContactList UClist = new UserContactList("Marcin");
+            UClist.add("Lukasz", new ContactItem(nick: UAlist["Lukasz"]));
+            UClist.add("Juliusz", new ContactItem(nick: UAlist["Juliusz"], pin: true));
+            UClist.writeToXML();
+
+            UserContactList UClist2 = new UserContactList("Marcin");
+            UClist2.readFromXML();
+            foreach (var elem in UClist2.ContactList)
+            {
+                Console.WriteLine("{0} {1}", elem.Key, elem.Value.ToString());
+            }
         }
     }
 }
