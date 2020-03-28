@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Telefon_serwer
+namespace Protocols
 {
     public enum nvcpOperation
     {
@@ -49,12 +49,14 @@ namespace Telefon_serwer
         OPER_STAT_FAIL = 302, //fail operation status name
         KEY_FAIL = 303, //fail key: time# -> tme#
         STATUS_FAIL = 304,
+        DATA_FAIL = 305, // if data format/size is wrong, not enough or too much data
         OTHER_FAIL = 307 //other
     };
 
 
     interface IProtocol
     {
+        //Use for encode message from string to object
         void encodeMsg(string msg);
     }
 }

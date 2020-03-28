@@ -6,49 +6,33 @@ using System.Threading.Tasks;
 using System.Timers;
 using System.Text.RegularExpressions;
 
-namespace Telefon_serwer
+namespace Protocols
 {
     /// <summary>
     /// Communication Protocol:
     ///  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-    /// | ver#1 |oper#LOGIN | status# SUCCESS |  ulp#OK  |data#string  |
+    /// | ver#1 |oper#LOGIN | status# SUCCESS |  ulp#OK   | data#string |
     /// |_ _ _ _|_ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _|_ _ _ _ _ _ _|
     /// 
     /// ver = protocol version, now is 1 
-    /// > lenght = total lenght in bytes
-    /// > type = type of communicate 
-    ///     > 0x0 = connect to
-    ///     > 0x1 = check avability
-    ///     > 0x2 = my status
-    /// > st = status type 0: my status, 1: OK, 2: Cannot establish connection
-    /// > st + num (stateNumber)
-    ///     ---------------
-    ///     > 0x20 = Ready
-    ///     > 0x21 = Waiting for connection
-    ///     > 0x22 = Busy
-    ///     ---------------
-    ///     > 0x40 = OK, receiver is avaiable
-    ///     > 0x41 = OK, receiver will be waiting for you
-    ///     ---------------
-    ///     > 0x80 = receiver is busy
-    ///     > 0x81 = receiver is waiting for other call
-    ///     > 0x82 = receiver is unavailable
-    ///     ---------------
-    /// > Timestamp
-    /// > Source IP Address
-    /// > Destination IP Address
+    /// > oper = type of communicate 
+    /// > status = communicate status
+    /// > ulp = ulp protocol status
     /// > Data = optional Data, ex. IP address of the call receiver
-    /// 
+    /// > Data usage:
+    ///      LOGIN -> (login) (password)
+    ///      REGISTER -> (login) (password) [(pseudonim)]
+    ///      CHANGE_DATA -> (login) (old_pass) (newpass) | (login) (new_nick) 
     /// </summary>
 
-    
+
 
     /// <summary>
     /// User Login Protocol
     /// <para></para>
     /// Use for login and register users
     /// </summary>
-    class ULP: IProtocol
+    public class ULP : IProtocol
     {
         private short version;
         private ulpOperation operationType;
@@ -61,12 +45,21 @@ namespace Telefon_serwer
         public ulpOperStatus OperationStatus { get { return operationStatus; } set { operationStatus = value; } }
         public IStatus ProtocolStatus { get { return protocolStatus; } set { protocolStatus = value; } }
 
-
+        /// <summary>
+        /// Default constructor
+        /// </summary>
+        /// <param name="data">string to be converted into ULP object</param>
         public ULP(string data)
         {
             encodeMsg(data);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="type">ulp operation type: login/register</param>
+        /// <param name="state">status of operation</param>
+        /// <param name="data">additional data to be pass</param>
         public ULP(ulpOperation type, ulpOperStatus state, string data = "")
         {
             this.version = 0x01;
@@ -76,6 +69,11 @@ namespace Telefon_serwer
             this.data = data;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="type">ulp operation type: login/register</param>
+        /// <param name="data">additional data to be pass</param>
         public ULP(ulpOperation type, string data = "")
         {
             this.version = 0x01;
@@ -85,6 +83,10 @@ namespace Telefon_serwer
             this.data = data;
         }
 
+        /// <summary>
+        /// Converts string into ULP object
+        /// </summary>
+        /// <param name="msg">input message</param>
         public void encodeMsg(string msg)
         {
             Regex regrCol = new Regex(@"([a-z]+)#'([0-9A-Za-z_\-\.\:\s\{\}]*)'\s*");
@@ -93,7 +95,7 @@ namespace Telefon_serwer
             foreach (Match e in m1)
             {
                 GroupCollection grCol = e.Groups;
-                Console.WriteLine("{0} {1}", grCol[1].ToString(), grCol[2]);
+                //Console.WriteLine("{0} {1}", grCol[1].ToString(), grCol[2]);
                 switch (grCol[1].ToString())
                 {
                     case "ver": this.version = short.Parse(grCol[2].ToString()); break;
@@ -137,6 +139,7 @@ namespace Telefon_serwer
                                 case "OPER_FAIL": this.ProtocolStatus = IStatus.OPER_FAIL; break;
                                 case "OPER_STAT_FAIL": this.ProtocolStatus = IStatus.OPER_STAT_FAIL; break;
                                 case "STATUS_FAIL": this.ProtocolStatus = IStatus.STATUS_FAIL; break;
+                                case "DATA_FAIL": this.ProtocolStatus = IStatus.DATA_FAIL;break;
                                 case "OTHER_FAIL": this.ProtocolStatus = IStatus.OTHER_FAIL; break;
                                 default:
                                     {

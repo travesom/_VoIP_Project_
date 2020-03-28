@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +9,7 @@ using System.Xml;
 namespace Telefon_serwer
 {
     /// <summary>
-    /// 
+    /// Class provided info about one contact in users contact list
     /// </summary>
     class ContactItem
     {
@@ -19,17 +20,33 @@ namespace Telefon_serwer
         public bool Pinned { get { return pinned; } set { pinned = value; } }
 
         public ContactItem() { nick = ""; }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="nick">contact nick name</param>
         public ContactItem(string nick)
         {
             this.nick = nick;
             this.pinned = false;
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="nick">contact nick name</param>
+        /// <param name="pin">is pinned to the top of the list</param>
         public ContactItem(string nick, bool pin)
         {
             this.nick = nick;
             this.pinned = pin;
         }
 
+        /// <summary>
+        /// Change contact nick name
+        /// </summary>
+        /// <param name="other">new nick name</param>
+        /// <returns></returns>
         public int changeNick(string other)
         {
             if (other == "") return 1;
@@ -48,53 +65,71 @@ namespace Telefon_serwer
 
 
     /// <summary>
-    /// Class that contains contact list for all users, each user have a list of his contacts
+    /// Class that contains contact list for one user
     /// </summary>
     class UserContactList
     {
         //key is user login
         private string ownerLogin;
-        private Dictionary<string, ContactItem> contactList;
+        private ConcurrentDictionary<string, ContactItem> contactList;
         
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ownerLogin">login of contact list owner</param>
         public UserContactList(string ownerLogin)
         {
             this.ownerLogin = ownerLogin;
-            contactList = new Dictionary<string, ContactItem>();
+            contactList = new ConcurrentDictionary<string, ContactItem>();
         }
 
-        public Dictionary<string, ContactItem> ContactList
+        public ConcurrentDictionary<string, ContactItem> ContactList
         {
             get { return contactList; }
         }
 
+        /// <summary>
+        /// Add new contact item to the list
+        /// </summary>
+        /// <param name="login">login - key</param>
+        /// <param name="item">contact item</param>
+        /// <returns></returns>
         public int add(string login, ContactItem item)
         {
-            if (!contactList.ContainsKey(login))
-            {
-                contactList.Add(login, item);
+            if (contactList.TryAdd(login, item))
+            {   
                 return 0;
             }
-            else return 1;
+            return 1;
         }
 
+        /// <summary>
+        /// Add new contact item to the list
+        /// </summary>
+        /// <param name="item">pair of (login,item)</param>
+        /// <returns></returns>
         public int add(KeyValuePair<string,ContactItem> item)
         {
-            if (!contactList.ContainsKey(item.Key))
-            {
-                contactList.Add(item.Key,item.Value);
+            if (contactList.TryAdd(item.Key, item.Value))
+            { 
                 return 0;
             }
-            else return 1;
+            return 1;
         }
 
+        /// <summary>
+        /// Delete contact from list
+        /// </summary>
+        /// <param name="login">login to be removed</param>
+        /// <returns></returns>
         public int remove(string login)
         {
-            if (!contactList.ContainsKey(login))
-            {
-                contactList.Remove(login);
+            ContactItem ci;
+            if (contactList.TryRemove(login, out ci))
+            { 
                 return 0;
             }
-            else return 1;
+            return 1;
         }
 
         public ContactItem this[string key]
@@ -102,7 +137,9 @@ namespace Telefon_serwer
             get { return contactList[key]; }
         }
 
-
+        /// <summary>
+        /// Converts object to XML file and saves locally
+        /// </summary>
         public void writeToXML()
         {
             XmlWriterSettings settings = new XmlWriterSettings();
@@ -133,13 +170,20 @@ namespace Telefon_serwer
             document.Close();
         }
 
-        public void readFromXML()
+        
+        /// <summary>
+        /// Read from local XML file and return new object.
+        /// </summary>
+        /// <param name="ownerLogin">list onwer login</param>
+        /// <returns>Returns new UserContactList object.</returns>
+        public static UserContactList readFromXML(string ownerLogin)
         {
+            UserContactList ucl = new UserContactList(ownerLogin);
+
             XmlDocument document = new XmlDocument();
             document.Load(ownerLogin + "_contact.xml");
             XmlElement root = document.DocumentElement;
 
-            
             foreach(XmlNode node in root.ChildNodes)
             {
                 if(node.NodeType == XmlNodeType.Element && node.Name != "owner")
@@ -151,9 +195,11 @@ namespace Telefon_serwer
                         if (contact.Name == "pinned") ci.Pinned = bool.Parse(contact.FirstChild.Value);
                     }
                     KeyValuePair<string, ContactItem> dict_item = new KeyValuePair<string, ContactItem>(node.Attributes["id"].Value, ci);
-                    add(dict_item);
+                    ucl.add(dict_item);
                 }
             }
+
+            return ucl;
         }
     }
 }

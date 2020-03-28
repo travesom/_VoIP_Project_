@@ -7,7 +7,7 @@ using System.Net;
 using System.Timers;
 using System.Text.RegularExpressions;
 
-namespace Telefon_serwer
+namespace Protocols
 {
 
 
@@ -23,23 +23,20 @@ namespace Telefon_serwer
     ///     > 0x0 = connect to
     ///     > 0x1 = check avability
     ///     > 0x2 = my status
-    /// > st = status type 0: my status, 1: OK, 2: Cannot establish connection
-    /// > st + num (stateNumber)
+    /// > 
+    /// > status (stateNumber)
     ///     ---------------
     ///     > 0x20 = Ready
     ///     > 0x21 = Waiting for connection
     ///     > 0x22 = Busy
-    ///     ---------------
-    ///     > 0x40 = OK, receiver is avaiable
-    ///     > 0x41 = OK, receiver will be waiting for you
-    ///     ---------------
-    ///     > 0x80 = receiver is busy
-    ///     > 0x81 = receiver is waiting for other call
-    ///     > 0x82 = receiver is unavailable
+    ///     > 0x82 = Unavailable
     ///     ---------------
     /// > Timestamp
     /// > Data = optional Data, ex. IP address of the call receiver
-    /// 
+    /// > Data usage:
+    ///     CONNECT -> (my_login) (other_login) ; Response -> (other_login) (nvcpOper: Waiting | Unavaiable)
+    ///     AVABILITY -> (my_login) (other_login) ; Response -> (other_login) (nvcpOperStatus: Ready | Busy | Unavaiable)
+    ///     MY_STATUS -> (my_login) (nvcpOperStatus: Ready | Busy); Response -> (OK | 'nothing')
     /// </summary>
 
     ///<summary>
@@ -68,12 +65,21 @@ namespace Telefon_serwer
         public IStatus ProtocolStatus { get { return protocolStatus; } set { protocolStatus = value; } }
         public DateTime TimeStamp { get { return timeStamp; } set { timeStamp = value; } }
         
-
+        /// <summary>
+        /// Default constructor converting string into  NVCP object
+        /// </summary>
+        /// <param name="data"></param>
         public NVCP(string data)
         {
             encodeMsg(data);
         }
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="type">nvcp operation: connect/check avability</param>
+        /// <param name="state">nvcp operation status</param>
+        /// <param name="data">optional data e.g. IP address</param>
         public NVCP(nvcpOperation type, nvcpOperStatus state, string data = "")
         {
             this.version = 0x01;
@@ -84,6 +90,11 @@ namespace Telefon_serwer
             this.data = data;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="type">nvcp operation: connect/check avability</param>
+        /// <param name="data">optional data e.g. IP address</param></param>
         public NVCP(nvcpOperation type, string data = "")
         {
             this.version = 0x01;
@@ -94,6 +105,10 @@ namespace Telefon_serwer
             this.data = data;
         }
 
+        /// <summary>
+        /// Converts string into NVCP object
+        /// </summary>
+        /// <param name="msg">input string</param>
         public void encodeMsg(string msg)
         {
             Regex regrCol = new Regex(@"([a-z]+)#'([0-9A-Za-z_\-\.\:\s\{\}]*)'\s*");
@@ -102,7 +117,7 @@ namespace Telefon_serwer
             foreach (Match e in m1)
             {
                 GroupCollection grCol = e.Groups;
-                Console.WriteLine("{0} {1}", grCol[1].ToString(), grCol[2]);
+                //Console.WriteLine("{0} {1}", grCol[1].ToString(), grCol[2]);
                 switch (grCol[1].ToString())
                 {
                     case "ver": this.version = short.Parse(grCol[2].ToString());break;
@@ -147,6 +162,7 @@ namespace Telefon_serwer
                                 case "OPER_FAIL": this.ProtocolStatus = IStatus.OPER_FAIL; break;
                                 case "OPER_STAT_FAIL": this.ProtocolStatus = IStatus.OPER_STAT_FAIL; break;
                                 case "STATUS_FAIL": this.ProtocolStatus = IStatus.STATUS_FAIL; break;
+                                case "DATA_FAIL": this.ProtocolStatus = IStatus.DATA_FAIL; break;
                                 case "OTHER_FAIL": this.ProtocolStatus = IStatus.OTHER_FAIL; break;
                                 default:
                                     {
