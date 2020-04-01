@@ -34,9 +34,11 @@ namespace Protocols
     /// > Timestamp
     /// > Data = optional Data, ex. IP address of the call receiver
     /// > Data usage:
-    ///     CONNECT -> (my_login) (other_login) ; Response -> (other_login) (nvcpOper: Waiting | Unavaiable)
-    ///     AVABILITY -> (my_login) (other_login) ; Response -> (other_login) (nvcpOperStatus: Ready | Busy | Unavaiable)
-    ///     MY_STATUS -> (my_login) (nvcpOperStatus: Ready | Busy); Response -> (OK | 'nothing')
+    ///     CONNECT -> (my_login) (other_login) (token); Response -> (other_login) (nvcpOper: Waiting | Unavaiable) (new_token)
+    ///                                           2 Caller Response -> (my_login) (nvcpOper: Waiting) (new_token)
+    ///     AVABILITY -> (my_login) (other_login) ; Response -> (other_login) (nvcpOperStatus: Ready | Busy | Unavaiable) 
+    ///     MY_STATUS -> (my_login) (nvcpOperStatus: Ready | Busy | Unavailable) (token); Response -> (new_token)
+    ///               -> % if my_ststus operStatus is unavailable, means user want to log out %
     /// </summary>
 
     ///<summary>

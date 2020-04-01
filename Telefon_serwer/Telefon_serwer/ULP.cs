@@ -20,9 +20,9 @@ namespace Protocols
     /// > ulp = ulp protocol status
     /// > Data = optional Data, ex. IP address of the call receiver
     /// > Data usage:
-    ///      LOGIN -> (login) (password)
+    ///      LOGIN -> (login) (password); response -> (new_token)
     ///      REGISTER -> (login) (password) [(pseudonim)]
-    ///      CHANGE_DATA -> (login) (old_pass) (newpass) | (login) (new_nick) 
+    ///      CHANGE_DATA -> (login) (old_pass) (newpass) (token)| (login) (new_nick) (token); response -> (nvcpOper: SUCCESS) (new_token)
     /// </summary>
 
 

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
+using System.Collections.Generic;
 
 namespace Telefon_serwer
 {
@@ -34,6 +36,11 @@ namespace Telefon_serwer
             this.nickName = name;
         }
 
+        public override string ToString()
+        {
+            return NickName + ' ' + PasswordSHA;
+        }
+
     }
 
     /// <summary>
@@ -60,14 +67,14 @@ namespace Telefon_serwer
         /// <param name="login"></param>
         /// <param name="password"></param>
         /// <returns>true if parameter is same as hash store in list</returns>
-        public bool login(string login, string password)
+        public int login(string login, string password)
         {
             if(exist(login))
             {
-                if (password != usersList[login].PasswordSHA) return false;
-                return true;
+                if (password != usersList[login].PasswordSHA) return 1;
+                return 0;
             }
-            return false;
+            return 2;
             
         }
 
@@ -155,8 +162,13 @@ namespace Telefon_serwer
         {
             get
             {
-                return usersList[key].NickName;
+                return usersList[key].NickName + ' ' + usersList[key].PasswordSHA;
             }
+        }
+
+        public IEnumerator<KeyValuePair<string,UserAccount>> GetEnumerator()
+        {
+            return usersList.GetEnumerator();
         }
 
         /// <summary>

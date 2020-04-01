@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 using Protocols;
+using System.Collections.Generic;
 
 namespace Telefon_serwer
 {
@@ -16,10 +18,12 @@ namespace Telefon_serwer
 
         private IPEndPoint address;
         private nvcpOperStatus status;
+        private int token;
         private DateTime time;
 
         public IPEndPoint Address { get { return address; } set { address = value; } }
         public nvcpOperStatus Status { get { return status; } set { status = value; } }
+        public int Token { get { return token; } set { token = value; } }
         public DateTime Time { get { return time; } set { time = value; } }
 
         public SubscriberItem() { }
@@ -34,6 +38,22 @@ namespace Telefon_serwer
         {
             this.address = addr;
             this.status = status;
+            this.token = 0;
+            this.time = time;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="addr">user IP address, e.g. 192.168.1.13</param>
+        /// <param name="status">nvcp operation status ready/busy</param>
+        /// <param name="time">Current time</param>
+        /// <param name="token">initial value of token, used for autorization</param>
+        public SubscriberItem(IPEndPoint addr, nvcpOperStatus status, DateTime time, int token)
+        {
+            this.address = addr;
+            this.status = status;
+            this.token = token;
             this.time = time;
         }
     }
@@ -96,6 +116,11 @@ namespace Telefon_serwer
             {
                 return subList[login];
             }
+        }
+
+        public IEnumerator<KeyValuePair<string, SubscriberItem>> GetEnumerator()
+        {
+            return subList.GetEnumerator();
         }
     }
 }
