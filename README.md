@@ -2,12 +2,16 @@
 
 
 ## Overview
-Project of VoIP communicator, contains client app and server
+Project of VoIP communicator, contains client app and server. Server is simple asynchronous app provides system management and communication between users. 
 
 
 ## Used Technology
-> for serwer app: .NET Framework 4.7
-> for klient app: .NET Framework 4.7
+#### For serwer app: 
+  - .NET Framework 4.7 
+  - XML
+#### For klient app: 
+  - .NET Framework 4.7
+  - XML
 
 ## Addition
 
