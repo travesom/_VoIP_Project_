@@ -15,18 +15,22 @@ namespace Telefon_klient
 {
     public partial class Form1 : Form
     {
-        Int32 _login_port = 8086;
-        Int32 _voice_port = 8087;
-        Int32 _control_port = 8088;
-        Int32 _xml_port = 8088;
-        IPAddress localaddr = IPAddress.Parse("127.0.0.1");
+        public Int32 _login_port = 8086;
+        public Int32 _voice_port = 8087;
+        public Int32 _control_port = 8088;
+        public Int32 _xml_port = 8089;
+        public IPAddress localaddr = IPAddress.Parse("127.0.0.1");
         public Form1()
         {
             
             InitializeComponent();
         }
 
-        private ULP send(ulpOperation operation, Int32 port) {
+        /*<summary>
+         sends login and password for login/register and return response from server
+         </summary>
+        */
+        private ULP send_login_data(ulpOperation operation, Int32 port) {
             TcpClient client = new TcpClient(localaddr.ToString(), port);
             ULP sendFrame = new ULP(operation, txt_login.Text + ' ' + txt_pass.Text);
             byte[] sendBytes = Encoding.ASCII.GetBytes(sendFrame.ToString());
@@ -49,11 +53,12 @@ namespace Telefon_klient
             }
             else
             {
-                ULP frame = send(ulpOperation.LOGIN, _login_port);
+                ULP frame = send_login_data(ulpOperation.LOGIN, _login_port);
                 switch (frame.OperationStatus) {
                     case ulpOperStatus.SUCCESS:
                         {
                             var token = frame.data;
+                            MessageBox.Show(token);
                             Hide();
                             Main_form fm = new Main_form(token, txt_login.Text);
                             fm.Show();
@@ -85,7 +90,7 @@ namespace Telefon_klient
 
         private void btn_register_Click(object sender, EventArgs e)
         {
-            switch (send(ulpOperation.REGISTER, _login_port).OperationStatus)
+            switch (send_login_data(ulpOperation.REGISTER, _login_port).OperationStatus)
             {
                 case ulpOperStatus.SUCCESS:
                     {
