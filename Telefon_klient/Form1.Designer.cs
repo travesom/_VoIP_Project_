@@ -33,6 +33,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.btn_Sign_in = new System.Windows.Forms.Button();
+            this.btn_register = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // txt_login
@@ -59,7 +60,7 @@
             this.label1.Size = new System.Drawing.Size(50, 20);
             this.label1.TabIndex = 2;
             this.label1.Text = "Login";
-            this.label1.Click += new System.EventHandler(this.label1_Click);
+           
             // 
             // label2
             // 
@@ -82,11 +83,23 @@
             this.btn_Sign_in.UseVisualStyleBackColor = true;
             this.btn_Sign_in.Click += new System.EventHandler(this.btn_Sign_in_Click);
             // 
+            // btn_register
+            // 
+            this.btn_register.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.btn_register.Location = new System.Drawing.Point(52, 321);
+            this.btn_register.Name = "btn_register";
+            this.btn_register.Size = new System.Drawing.Size(89, 29);
+            this.btn_register.TabIndex = 5;
+            this.btn_register.Text = "Register";
+            this.btn_register.UseVisualStyleBackColor = true;
+            this.btn_register.Click += new System.EventHandler(this.btn_register_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.btn_register);
             this.Controls.Add(this.btn_Sign_in);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
@@ -106,6 +119,7 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button btn_Sign_in;
+        private System.Windows.Forms.Button btn_register;
     }
 }
 

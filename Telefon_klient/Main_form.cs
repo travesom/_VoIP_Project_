@@ -9,12 +9,16 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Telefon_klient
-{
+{       
     public partial class Main_form : Form
-    {
-        public Main_form()
+    {   string user_token;
+        string login;
+        public Main_form(string token,string login)
         {
+            this.user_token = token;
+            this.login = login;
             InitializeComponent();
+            label_username.Text = this.login;
         }
 
         private void button1_Click(object sender, EventArgs e)

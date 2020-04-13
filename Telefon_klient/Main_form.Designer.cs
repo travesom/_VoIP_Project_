@@ -28,34 +28,47 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.button1 = new System.Windows.Forms.Button();
+            this.btn_log_out = new System.Windows.Forms.Button();
+            this.label_username = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
-            // button1
+            // btn_log_out
             // 
-            this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-            this.button1.Location = new System.Drawing.Point(654, 31);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(89, 29);
-            this.button1.TabIndex = 5;
-            this.button1.Text = "log out";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.btn_log_out.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.btn_log_out.Location = new System.Drawing.Point(654, 31);
+            this.btn_log_out.Name = "btn_log_out";
+            this.btn_log_out.Size = new System.Drawing.Size(89, 29);
+            this.btn_log_out.TabIndex = 5;
+            this.btn_log_out.Text = "log out";
+            this.btn_log_out.UseVisualStyleBackColor = true;
+            this.btn_log_out.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // label_username
+            // 
+            this.label_username.AutoSize = true;
+            this.label_username.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.label_username.Location = new System.Drawing.Point(368, 9);
+            this.label_username.Name = "label_username";
+            this.label_username.Size = new System.Drawing.Size(0, 25);
+            this.label_username.TabIndex = 6;
             // 
             // Main_form
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(this.button1);
+            this.Controls.Add(this.label_username);
+            this.Controls.Add(this.btn_log_out);
             this.Name = "Main_form";
             this.Text = "Main_form";
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
         #endregion
 
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button btn_log_out;
+        private System.Windows.Forms.Label label_username;
     }
 }
