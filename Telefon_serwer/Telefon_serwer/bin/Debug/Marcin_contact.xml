@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<contacts>
+  <owner id="Marcin" />
+  <contact id="Juliusz">
+    <nick>Julek</nick>
+    <pinned>True</pinned>
+  </contact>
+  <contact id="Lukasz">
+    <nick>Lucas</nick>
+    <pinned>False</pinned>
+  </contact>
+</contacts>

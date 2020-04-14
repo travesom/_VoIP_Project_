@@ -196,6 +196,7 @@ namespace Telefon_serwer
                 document.WriteEndElement();
                 document.WriteEndElement();
             }
+            document.WriteEndElement();
             document.WriteEndDocument();
             document.Close();
         }
@@ -228,27 +229,30 @@ namespace Telefon_serwer
         /// Create new UserAccountList and save content of XML file
         /// </summary>
         /// <returns>new UserAccountList object</returns>
-        public static UserAccountList createFromXML()
+        public static Task<UserAccountList> createFromXMLAsync()
         {
-            var dict = new UserAccountList();
-            XmlDocument document = new XmlDocument();
-            document.Load("users.xml");
-            XmlElement root = document.DocumentElement;
-
-            foreach (XmlNode node in root.ChildNodes)
+            return Task.Run(() =>
             {
-                if (node.NodeType == XmlNodeType.Element)
+                var dict = new UserAccountList();
+                XmlDocument document = new XmlDocument();
+                document.Load("users.xml");
+                XmlElement root = document.DocumentElement;
+
+                foreach (XmlNode node in root.ChildNodes)
                 {
-                    UserAccount ua = new UserAccount();
-                    foreach (XmlNode contact in node.ChildNodes)
+                    if (node.NodeType == XmlNodeType.Element)
                     {
-                        if (contact.Name == "password") ua.PasswordSHA = contact.FirstChild.Value;
-                        if (contact.Name == "pinned") ua.NickName = contact.FirstChild.Value;
+                        UserAccount ua = new UserAccount();
+                        foreach (XmlNode contact in node.ChildNodes)
+                        {
+                            if (contact.Name == "password") ua.PasswordSHA = contact.FirstChild.Value;
+                            if (contact.Name == "pinned") ua.NickName = contact.FirstChild.Value;
+                        }
+                        dict.usersList.TryAdd(node.Attributes["id"].Value, ua);
                     }
-                    dict.usersList.TryAdd(node.Attributes["id"].Value, ua);
                 }
-            }
-            return dict;
+                return dict;
+            });
         }
     }
 

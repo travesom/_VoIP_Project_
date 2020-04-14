@@ -32,7 +32,7 @@ namespace Telefon_serwer
         }
 
         /// <summary>
-        /// 
+        /// Consructor
         /// </summary>
         /// <param name="nick">contact nick name</param>
         /// <param name="pin">is pinned to the top of the list</param>
@@ -140,34 +140,38 @@ namespace Telefon_serwer
         /// <summary>
         /// Converts object to XML file and saves locally
         /// </summary>
-        public void writeToXML()
+        public Task<int> writeToXMLAsync()
         {
-            XmlWriterSettings settings = new XmlWriterSettings();
-            settings.Indent = true;
-            XmlWriter document = XmlWriter.Create(ownerLogin + "_contact.xml",settings);
-            document.WriteStartDocument();
-            document.WriteStartElement("contacts");
-
-            document.WriteStartElement("owner");
-            document.WriteAttributeString("id", ownerLogin);
-            document.WriteEndElement();
-
-            foreach( var elem in contactList)
+            return Task.Run(() =>
             {
-                document.WriteStartElement("contact");
-                document.WriteAttributeString("id", elem.Key);
+                XmlWriterSettings settings = new XmlWriterSettings();
+                settings.Indent = true;
+                XmlWriter document = XmlWriter.Create(ownerLogin + "_contact.xml", settings);
+                document.WriteStartDocument();
+                document.WriteStartElement("contacts");
 
-                document.WriteStartElement("nick");
-                document.WriteString(elem.Value.Nick);
+                document.WriteStartElement("owner");
+                document.WriteAttributeString("id", ownerLogin);
                 document.WriteEndElement();
 
-                document.WriteStartElement("pinned");
-                document.WriteString((elem.Value.Pinned).ToString());
-                document.WriteEndElement();
-                document.WriteEndElement();
-            }
-            document.WriteEndDocument();
-            document.Close();
+                foreach (var elem in contactList)
+                {
+                    document.WriteStartElement("contact");
+                    document.WriteAttributeString("id", elem.Key);
+
+                    document.WriteStartElement("nick");
+                    document.WriteString(elem.Value.Nick);
+                    document.WriteEndElement();
+
+                    document.WriteStartElement("pinned");
+                    document.WriteString((elem.Value.Pinned).ToString());
+                    document.WriteEndElement();
+                    document.WriteEndElement();
+                }
+                document.WriteEndDocument();
+                document.Close();
+                return 1;
+            });
         }
 
         
@@ -176,30 +180,31 @@ namespace Telefon_serwer
         /// </summary>
         /// <param name="ownerLogin">list onwer login</param>
         /// <returns>Returns new UserContactList object.</returns>
-        public static UserContactList readFromXML(string ownerLogin)
+        public static Task<UserContactList> readFromXMLAsync(string ownerLogin)
         {
-            UserContactList ucl = new UserContactList(ownerLogin);
-
-            XmlDocument document = new XmlDocument();
-            document.Load(ownerLogin + "_contact.xml");
-            XmlElement root = document.DocumentElement;
-
-            foreach(XmlNode node in root.ChildNodes)
+            return Task.Run(() =>
             {
-                if(node.NodeType == XmlNodeType.Element && node.Name != "owner")
-                {
-                    ContactItem ci = new ContactItem();
-                    foreach (XmlNode contact in node.ChildNodes)
-                    { 
-                        if (contact.Name == "nick") ci.Nick = contact.FirstChild.Value;
-                        if (contact.Name == "pinned") ci.Pinned = bool.Parse(contact.FirstChild.Value);
-                    }
-                    KeyValuePair<string, ContactItem> dict_item = new KeyValuePair<string, ContactItem>(node.Attributes["id"].Value, ci);
-                    ucl.add(dict_item);
-                }
-            }
+                UserContactList ucl = new UserContactList(ownerLogin);
+                XmlDocument document = new XmlDocument();
+                document.Load(ownerLogin + "_contact.xml");
+                XmlElement root = document.DocumentElement;
 
-            return ucl;
+                foreach (XmlNode node in root.ChildNodes)
+                {
+                    if (node.NodeType == XmlNodeType.Element && node.Name != "owner")
+                    {
+                        ContactItem ci = new ContactItem();
+                        foreach (XmlNode contact in node.ChildNodes)
+                        {
+                            if (contact.Name == "nick") ci.Nick = contact.FirstChild.Value;
+                            if (contact.Name == "pinned") ci.Pinned = bool.Parse(contact.FirstChild.Value);
+                        }
+                        KeyValuePair<string, ContactItem> dict_item = new KeyValuePair<string, ContactItem>(node.Attributes["id"].Value, ci);
+                        ucl.add(dict_item);
+                    }
+                }
+                return ucl;
+            });
         }
     }
 }

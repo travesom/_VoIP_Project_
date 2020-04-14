@@ -55,8 +55,13 @@ namespace Telefon_serwer
                                 {                     
                                     var login = data.Split(' ')[0];
                                     var passwd = data.Split(' ')[1];
-                                    int res = uaList.login(login, passwd);
-                                    if (res==0)
+                                    byte[] hash;
+                                    using (SHA256 sha256 = SHA256.Create())
+                                    {
+                                        hash = sha256.ComputeHash(Encoding.ASCII.GetBytes(passwd));
+                                    }
+                                    int result = uaList.login(login, Convert.ToBase64String(hash));
+                                    if (result==0)
                                     {
                                         if (asList.add(login, new SubscriberItem(((IPEndPoint)client.Client.RemoteEndPoint), nvcpOperStatus.READY, DateTime.Now)) == 0)
                                         {
@@ -72,7 +77,7 @@ namespace Telefon_serwer
                                             await LogRegister.WriteLineAsync(DateTime.Now + ": Account: " + login + ": already logged in ");
                                         }
                                     }
-                                    else if(res == 1)
+                                    else if(result == 1)
                                     {
                                         sendFrame.OperationStatus = ulpOperStatus.WRONG_PASS;
                                         await LogRegister.WriteLineAsync(DateTime.Now + ": Account: error: wrong password");
@@ -88,10 +93,17 @@ namespace Telefon_serwer
 
                             case ulpOperation.REGISTER:
                                 {
-                                    if (uaList.createAccount(data.Split(' ')[0], data.Split(' ')[1]) == 0)
+                                    var login = data.Split(' ')[0];
+                                    var passwd = data.Split(' ')[1];
+                                    byte[] hash;
+                                    using (SHA256 sha256 = SHA256.Create())
+                                    {
+                                        hash = sha256.ComputeHash(Encoding.ASCII.GetBytes(passwd));
+                                    }
+                                    if (uaList.createAccount(login, Convert.ToBase64String(hash)) == 0)
                                         {
                                             sendFrame.OperationStatus = ulpOperStatus.SUCCESS;
-                                            await LogRegister.WriteLineAsync(DateTime.Now + ": Account: " + "succesfully registered: " + data.Split(' ')[0]);
+                                            await LogRegister.WriteLineAsync(DateTime.Now + ": Account: " + "succesfully registered: " + login);
                                             //uaList.writeToXML();
                                         }
                                     else
@@ -105,76 +117,84 @@ namespace Telefon_serwer
                             case ulpOperation.CHANGE_DATA:
                                 {
                                     string[] tab = data.Split(' ');
-                                    if (asList.exist(tab[0]))
-                                    {
-                                        if (asList[tab[0]].Token == int.Parse(tab[tab.Length-1]))
+                                        if (asList.exist(tab[0]))
                                         {
-                                            int rnd = r1.Next(1000000, 9999999);
-                                            if (tab.Length == 4)
+                                            if (asList[tab[0]].Token == int.Parse(tab[tab.Length - 1]))
                                             {
-                                                if (uaList.changePassword(tab[0], tab[1], tab[2]) == 0)
+                                                int rnd = r1.Next(1000000, 9999999);
+                                                if (tab.Length == 4)
                                                 {
-                                                    asList[tab[0]].Token = rnd;
-                                                    sendFrame.data = rnd.ToString();
-                                                    sendFrame.OperationStatus = ulpOperStatus.SUCCESS;
-                                                    //uaList.writeToXML();
-                                                    await LogRegister.WriteLineAsync(DateTime.Now + ": Account: " + "succesfully changed password");
-                                                }
-                                                else if (uaList.changePassword(tab[0], tab[1], tab[2]) == 1)
-                                                {
-                                                    asList[tab[0]].Token = rnd;
-                                                    sendFrame.data = rnd.ToString();
-                                                    sendFrame.OperationStatus = ulpOperStatus.WRONG_LOGIN;
-                                                    await LogRegister.WriteLineAsync(DateTime.Now + ": Account: " + "error: cannot changed password");
-                                                }
-                                                else
-                                                {
-                                                    asList[tab[0]].Token = rnd;
-                                                    sendFrame.data = rnd.ToString();
-                                                    sendFrame.OperationStatus = ulpOperStatus.WRONG_PASS;
-                                                    await LogRegister.WriteLineAsync(DateTime.Now + ": Account: " + "error: cannot changed password");
-                                                }
-                                            }
-                                            else
-                                            {
-                                                if (tab.Length == 3)
-                                                {
-                                                    if (uaList.changeNickName(tab[0], tab[1]) == 0)
+                                                    byte[] hash;
+                                                    byte[] newHash;
+                                                    using (SHA256 sha256 = SHA256.Create())
+                                                    {
+                                                       hash = sha256.ComputeHash(Encoding.ASCII.GetBytes(tab[1]));
+                                                       newHash = sha256.ComputeHash(Encoding.ASCII.GetBytes(tab[2]));
+                                                    }
+                                                    var result = uaList.changePassword(tab[0], Convert.ToBase64String(hash), Convert.ToBase64String(newHash));
+                                                    if ( result == 0)
                                                     {
                                                         asList[tab[0]].Token = rnd;
                                                         sendFrame.data = rnd.ToString();
                                                         sendFrame.OperationStatus = ulpOperStatus.SUCCESS;
                                                         //uaList.writeToXML();
-                                                        await LogRegister.WriteLineAsync(DateTime.Now + ": Account: " + "succesfully changed nick");
+                                                        await LogRegister.WriteLineAsync(DateTime.Now + ": Account: " + "succesfully changed password");
+                                                    }
+                                                    else if (result == 1)
+                                                    {
+                                                        asList[tab[0]].Token = rnd;
+                                                        sendFrame.data = rnd.ToString();
+                                                        sendFrame.OperationStatus = ulpOperStatus.WRONG_LOGIN;
+                                                        await LogRegister.WriteLineAsync(DateTime.Now + ": Account: " + "error: cannot changed password");
                                                     }
                                                     else
                                                     {
                                                         asList[tab[0]].Token = rnd;
                                                         sendFrame.data = rnd.ToString();
-                                                        sendFrame.OperationStatus = ulpOperStatus.WRONG_LOGIN;
-                                                        await LogRegister.WriteLineAsync(DateTime.Now + ": Account: " + "error: cannot changed nick");
+                                                        sendFrame.OperationStatus = ulpOperStatus.WRONG_PASS;
+                                                        await LogRegister.WriteLineAsync(DateTime.Now + ": Account: " + "error: cannot changed password");
                                                     }
                                                 }
                                                 else
                                                 {
-                                                    asList[tab[0]].Token = rnd;
-                                                    sendFrame.data = rnd.ToString();
-                                                    sendFrame.ProtocolStatus = IStatus.DATA_FAIL;
-                                                    await LogRegister.WriteLineAsync(DateTime.Now + ": Protocol: " + "error: wrong data");
+                                                    if (tab.Length == 3)
+                                                    {
+                                                        if (uaList.changeNickName(tab[0], tab[1]) == 0)
+                                                        {
+                                                            asList[tab[0]].Token = rnd;
+                                                            sendFrame.data = rnd.ToString();
+                                                            sendFrame.OperationStatus = ulpOperStatus.SUCCESS;
+                                                            //uaList.writeToXML();
+                                                            await LogRegister.WriteLineAsync(DateTime.Now + ": Account: " + "succesfully changed nick");
+                                                        }
+                                                        else
+                                                        {
+                                                            asList[tab[0]].Token = rnd;
+                                                            sendFrame.data = rnd.ToString();
+                                                            sendFrame.OperationStatus = ulpOperStatus.WRONG_LOGIN;
+                                                            await LogRegister.WriteLineAsync(DateTime.Now + ": Account: " + "error: cannot changed nick");
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        asList[tab[0]].Token = rnd;
+                                                        sendFrame.data = rnd.ToString();
+                                                        sendFrame.ProtocolStatus = IStatus.DATA_FAIL;
+                                                        await LogRegister.WriteLineAsync(DateTime.Now + ": Protocol: " + "error: wrong data");
+                                                    }
                                                 }
+                                            }
+                                            else
+                                            {
+                                                sendFrame.ProtocolStatus = IStatus.DATA_FAIL;
+                                                await LogRegister.WriteLineAsync(DateTime.Now + ": Autorization: " + "error: wrong token ");
                                             }
                                         }
                                         else
                                         {
-                                            sendFrame.ProtocolStatus = IStatus.DATA_FAIL;
-                                            await LogRegister.WriteLineAsync(DateTime.Now + ": Autorization: " + "error: wrong token ");
-                                        }
-                                    }
-                                    else
-                                    {
-                                        sendFrame.OperationStatus = ulpOperStatus.WRONG_LOGIN;
-                                        await LogRegister.WriteLineAsync(DateTime.Now + ": Account: " + "error: cannot change nick to user not log in");
-                                    }                            
+                                            sendFrame.OperationStatus = ulpOperStatus.WRONG_LOGIN;
+                                            await LogRegister.WriteLineAsync(DateTime.Now + ": Account: " + "error: cannot change nick to user not log in");
+                                        }                            
                                 }
                                 break;
                             default:
@@ -225,6 +245,7 @@ namespace Telefon_serwer
 
                         NVCP sendFrame = new NVCP(frame.OperationType, "");
                         sendFrame.ProtocolStatus = IStatus.OK;
+                        //sendFrame.ProtocolStatus = frame.ProtocolStatus;
 
                         switch(frame.OperationType)
                         {
@@ -373,7 +394,7 @@ namespace Telefon_serwer
                                             sendFrame.OperationType = nvcpOperation.MY_STATUS;
                                             sendFrame.ProtocolStatus = IStatus.OTHER_FAIL;
                                             sendFrame.TimeStamp = DateTime.Now;
-                                            await LogRegister.WriteLineAsync(DateTime.Now + ": User Status: " + "error: user send status without being logged in");
+                                            await LogRegister.WriteLineAsync(DateTime.Now + ": User Status: " + "error: " + my_login + " send status without being logged in");
                                         }
                                     }
                                     else
@@ -411,10 +432,13 @@ namespace Telefon_serwer
                 await client.GetStream().ReadAsync(buffer, 0, buffer.Length).ContinueWith(
                     async (lenght) =>
                     {
-                        // 'login' 'tpken' 
+                        // 'login' 
                         var tab = Encoding.ASCII.GetString(buffer).Split(' ');
-                        byte[] xmlFile = File.ReadAllBytes(tab[0] + "_contact.xml");
-                        await client.GetStream().WriteAsync(xmlFile, 0, 2);
+                        if (asList[tab[0]].Token == int.Parse(tab[1]))
+                        { 
+                            byte[] xmlFile = File.ReadAllBytes(tab[0] + "_contact.xml");
+                            await client.GetStream().WriteAsync(xmlFile, 0, xmlFile.Length);
+                        }               
                     });
             }
         }
@@ -433,7 +457,7 @@ namespace Telefon_serwer
             Console.WriteLine("All accounts:");
             foreach (var i in asList)
             {
-                Console.WriteLine(i.Key + ' ' + i.Value);
+                Console.WriteLine(i.Key + ' ' + i.Value.Status + ' ' + i.Value.Token);
             }
         }
 
@@ -447,65 +471,72 @@ namespace Telefon_serwer
                 {
                     case "get":
                         {
-                            switch(tab[1])
+                            try
                             {
-                                case "account":
-                                    {
-                                        try
+                                switch (tab[1])
+                                {
+                                    case "account":
                                         {
-                                            switch (tab[2])
+                                            try
                                             {
-                                                case "--all": GetAllAccounts(); break;
-                                                case "": break;
-                                                default:
-                                                    {
-                                                        try
+                                                switch (tab[2])
+                                                {
+                                                    case "--all": GetAllAccounts(); break;
+                                                    case "": break;
+                                                    default:
                                                         {
-                                                            Console.WriteLine(tab[2] + ' ' + uaList[tab[2]]);
+                                                            try
+                                                            {
+                                                                Console.WriteLine(tab[2] + ' ' + uaList[tab[2]]);
+                                                            }
+                                                            catch (Exception)
+                                                            {
+                                                                Console.WriteLine("No account exists");
+                                                            }
                                                         }
-                                                        catch (Exception ex)
-                                                        {
-                                                            Console.WriteLine("No account exists");
-                                                        }
-                                                    }
-                                                    break;
+                                                        break;
+                                                }
+                                            }
+                                            catch (Exception)
+                                            {
+                                                Console.WriteLine("error: get account [<name> | --all] ");
                                             }
                                         }
-                                        catch(Exception ex)
+                                        break;
+                                    case "subscriber":
                                         {
-                                            Console.WriteLine("get account [<name> | --all] ");
-                                        }
-                                    }
-                                    break;
-                                case "subscriber":
-                                    {
-                                        try
-                                        {
-                                            switch (tab[2])
+                                            try
                                             {
-                                                case "--all": GetAllActiveSubscribers(); break;
-                                                case "": break;
-                                                default:
-                                                    {
-                                                        try
+                                                switch (tab[2])
+                                                {
+                                                    case "--all": GetAllActiveSubscribers(); break;
+                                                    case "": break;
+                                                    default:
                                                         {
-                                                            Console.WriteLine(asList[tab[2]]);
+                                                            try
+                                                            {
+                                                                Console.WriteLine(asList[tab[2]]);
+                                                            }
+                                                            catch (Exception)
+                                                            {
+                                                                Console.WriteLine("No active subscriber");
+                                                            }
                                                         }
-                                                        catch (Exception ex)
-                                                        {
-                                                            Console.WriteLine("No active subscriber");
-                                                        }
-                                                    }
-                                                    break;
+                                                        break;
+                                                }
+                                            }
+                                            catch (Exception)
+                                            {
+                                                Console.WriteLine("get subscriber [<name> | --all] ");
                                             }
                                         }
-                                        catch (Exception ex)
-                                        {
-                                            Console.WriteLine("get subscriber [<name> | --all] ");
-                                        }
-                                    }
-                                    break;
-                                default: Console.WriteLine("get [subscriber | account]"); break;
+                                        break;
+                                    default: Console.WriteLine("get [subscriber | account]"); break;
+                                }
+                            }
+                            catch(Exception)
+                            {
+                                Console.WriteLine("error: get [subscriber | account]"); break;
                             }
                         }
                         break;
@@ -513,18 +544,42 @@ namespace Telefon_serwer
                         {
                             Console.WriteLine("Simple server dev console help:");
                             Console.WriteLine("> get [account | subscriber] [<name> | --all] ");
+                            Console.WriteLine("> time");
+                            Console.WriteLine("> info");
+                            Console.WriteLine("> shutdown <return code>");
                             Console.WriteLine("> help -> to see this helpdesk");
+                        }
+                        break;
+                    case "info":
+                        {
+                            Console.WriteLine("------< VoIP Server >------");
+                            Console.WriteLine("Simple asynchronous server provides VoIP connections. \n");
+                            Console.WriteLine("Github project:\n> https://github.com/travesom/_VoIP_Project_ \n");
+                            Console.WriteLine("Version 1.01a \n");
+
+                        }
+                        break;
+                    case "time":
+                        {
+                            Console.WriteLine("Current time: " + DateTime.Now);
                         }
                         break;
                     case "shutdown":
                         {
                             LogRegister.Close();
-                            Environment.Exit(0);
+                            try
+                            { 
+                                Environment.Exit(int.Parse(tab[1]));
+                            }
+                            catch(Exception)
+                            {
+                                Environment.Exit(0);
+                            }
+                                     
                         }
                         break;
-                    default: Console.WriteLine("error");break;
+                    default: Console.WriteLine("error"); break;
                 }
-
             }
         }
 
@@ -542,6 +597,7 @@ namespace Telefon_serwer
 
         static void Main(string[] args)
         {
+            
             //uaList.createAccount("Marcin", "0x123456");
             Console.Title = "TIP_server";
             Console.ForegroundColor = ConsoleColor.White;
@@ -569,20 +625,28 @@ namespace Telefon_serwer
                 Console.WriteLine("{0} {1}", elem.Key, elem.Value.ToString());
             }
             */
+            
             LogRegister.AutoFlush = true;
             string ipAddr = args[0];
             Console.WriteLine("Server is running on IP address: {0}", args[0]);
-            Console.WriteLine("Available ports: 8086, 8087, 8088, 8089");
+            Console.Write("Available ports: ");
             Task t1 = loginTask(ipAddr);
+            if ((int)t1.Status < 3) Console.Write(8086 + " ");
             Task t2 = controlTask(ipAddr);
+            if ((int)t2.Status < 3) Console.Write(8088 + " ");
             Task t3 = voiceTask();
+            if ((int)t3.Status < 3) Console.Write(8087 + " ");
             Task t4 = contactListTask(ipAddr);
+            if ((int)t4.Status < 3) Console.Write(8089 + " ");
+            Console.Write('\n');
             Task t5 = controlShellTask();
             t1.Wait();
             t2.Wait();
             t3.Wait();
             t4.Wait();
             t5.Wait();
+            
+
         }
     }
 }
