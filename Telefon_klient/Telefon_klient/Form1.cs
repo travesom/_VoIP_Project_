@@ -19,7 +19,7 @@ namespace Telefon_klient
         public Int32 _voice_port = 8087;
         public Int32 _control_port = 8088;
         public Int32 _xml_port = 8089;
-        public IPAddress localaddr = IPAddress.Parse("127.0.0.1");
+        public IPAddress server_addres = IPAddress.Parse("127.0.0.1");
         public Form1()
         {
             
@@ -31,7 +31,8 @@ namespace Telefon_klient
          </summary>
         */
         private ULP send_login_data(ulpOperation operation, Int32 port) {
-            TcpClient client = new TcpClient(localaddr.ToString(), port);
+            server_addres = IPAddress.Parse(txt_server_add.Text);
+            TcpClient client = new TcpClient(server_addres.ToString(), port);
             ULP sendFrame = new ULP(operation, txt_login.Text + ' ' + txt_pass.Text);
             byte[] sendBytes = Encoding.ASCII.GetBytes(sendFrame.ToString());
 
@@ -53,10 +54,11 @@ namespace Telefon_klient
             }
             else
             {
+                
                 ULP frame = send_login_data(ulpOperation.LOGIN, _login_port);
                 switch (frame.OperationStatus) {
                     case ulpOperStatus.SUCCESS:
-                        {
+                        {   
                             var token = frame.data;
                             MessageBox.Show(token);
                             Hide();
@@ -100,7 +102,7 @@ namespace Telefon_klient
                 
                 case ulpOperStatus.WRONG_LOGIN:
                     {
-                        MessageBox.Show("Login you used is taken, plese choose diffrent login");
+                        MessageBox.Show("Login you used is taken, please choose different login");
                     }
                     break;
                 default:

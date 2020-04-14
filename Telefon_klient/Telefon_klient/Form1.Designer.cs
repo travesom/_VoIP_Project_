@@ -34,6 +34,8 @@
             this.label2 = new System.Windows.Forms.Label();
             this.btn_Sign_in = new System.Windows.Forms.Button();
             this.btn_register = new System.Windows.Forms.Button();
+            this.txt_server_add = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // txt_login
@@ -60,7 +62,6 @@
             this.label1.Size = new System.Drawing.Size(50, 20);
             this.label1.TabIndex = 2;
             this.label1.Text = "Login";
-           
             // 
             // label2
             // 
@@ -94,11 +95,31 @@
             this.btn_register.UseVisualStyleBackColor = true;
             this.btn_register.Click += new System.EventHandler(this.btn_register_Click);
             // 
+            // txt_server_add
+            // 
+            this.txt_server_add.Location = new System.Drawing.Point(328, 30);
+            this.txt_server_add.Name = "txt_server_add";
+            this.txt_server_add.Size = new System.Drawing.Size(209, 22);
+            this.txt_server_add.TabIndex = 6;
+            this.txt_server_add.Text = "127.0.0.1";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.label3.Location = new System.Drawing.Point(183, 30);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(125, 20);
+            this.label3.TabIndex = 7;
+            this.label3.Text = "Server Address";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.label3);
+            this.Controls.Add(this.txt_server_add);
             this.Controls.Add(this.btn_register);
             this.Controls.Add(this.btn_Sign_in);
             this.Controls.Add(this.label2);
@@ -120,6 +141,8 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button btn_Sign_in;
         private System.Windows.Forms.Button btn_register;
+        private System.Windows.Forms.TextBox txt_server_add;
+        private System.Windows.Forms.Label label3;
     }
 }
 

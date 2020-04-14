@@ -32,7 +32,6 @@
             this.label_username = new System.Windows.Forms.Label();
             this.rad_status_ready = new System.Windows.Forms.RadioButton();
             this.rad_status_busy = new System.Windows.Forms.RadioButton();
-            this.rad_status_unavaible = new System.Windows.Forms.RadioButton();
             this.SuspendLayout();
             // 
             // btn_log_out
@@ -79,24 +78,11 @@
             this.rad_status_busy.UseVisualStyleBackColor = true;
             this.rad_status_busy.CheckedChanged += new System.EventHandler(this.rad_status_busy_CheckedChanged);
             // 
-            // rad_status_unavaible
-            // 
-            this.rad_status_unavaible.AutoSize = true;
-            this.rad_status_unavaible.Location = new System.Drawing.Point(12, 68);
-            this.rad_status_unavaible.Name = "rad_status_unavaible";
-            this.rad_status_unavaible.Size = new System.Drawing.Size(92, 21);
-            this.rad_status_unavaible.TabIndex = 9;
-            this.rad_status_unavaible.TabStop = true;
-            this.rad_status_unavaible.Text = "Unavaible";
-            this.rad_status_unavaible.UseVisualStyleBackColor = true;
-            this.rad_status_unavaible.CheckedChanged += new System.EventHandler(this.rad_status_unavaible_CheckedChanged);
-            // 
             // Main_form
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(this.rad_status_unavaible);
             this.Controls.Add(this.rad_status_busy);
             this.Controls.Add(this.rad_status_ready);
             this.Controls.Add(this.label_username);
@@ -114,6 +100,5 @@
         private System.Windows.Forms.Label label_username;
         private System.Windows.Forms.RadioButton rad_status_ready;
         private System.Windows.Forms.RadioButton rad_status_busy;
-        private System.Windows.Forms.RadioButton rad_status_unavaible;
     }
 }
