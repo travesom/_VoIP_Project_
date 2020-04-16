@@ -10,6 +10,8 @@ using System.Security.Cryptography;
 using System.Net.Sockets;
 using Protocols;
 using System.Diagnostics;
+using System.Security.Cryptography.X509Certificates;
+using System.Net.Security;
 
 namespace Telefon_serwer
 {
@@ -28,7 +30,7 @@ namespace Telefon_serwer
         public static UserAccountList uaList = new UserAccountList();
 
         public static StreamWriter LogRegister = new StreamWriter("first_log.log");
-        
+        public static X509Certificate serverCertificate = null; 
 
         static async Task loginTask(string ipAddr)
         {             
@@ -37,10 +39,20 @@ namespace Telefon_serwer
             while (true)
             {
                 TcpClient client = await server.AcceptTcpClientAsync();
+                SslStream sslClient = new SslStream(client.GetStream(), false);
+                try
+                {
+                    sslClient.AuthenticateAsServer(serverCertificate, false, false);
+                    //Console.WriteLine("Uwierzyleniono");
+                }
+                catch(Exception)
+                {
+                    await LogRegister.WriteLineAsync(DateTime.Now + ": SSL: failed to authenticate");
+                }
                 Random r1 = new Random();
                 byte[] buffer = new byte[1500];
                 //Console.WriteLine(client.Client.RemoteEndPoint.ToString());
-                await client.GetStream().ReadAsync(buffer, 0, buffer.Length).ContinueWith(
+                await sslClient.ReadAsync(buffer, 0, buffer.Length).ContinueWith(
                     async (lenght) =>
                     {
                         ULP frame = new ULP(Encoding.ASCII.GetString(buffer, 0, lenght.Result));
@@ -205,7 +217,7 @@ namespace Telefon_serwer
                                 break;
                         }
                         byte[] sendBytes = Encoding.ASCII.GetBytes(sendFrame.ToString());
-                        await client.GetStream().WriteAsync(sendBytes, 0, sendBytes.Length);
+                        await sslClient.WriteAsync(sendBytes, 0, sendBytes.Length);
                     });
             }
         }
@@ -235,9 +247,19 @@ namespace Telefon_serwer
             while (true)
             {
                 TcpClient client = await server.AcceptTcpClientAsync();
+                SslStream sslClient = new SslStream(client.GetStream(), false);
+                try
+                {
+                    sslClient.AuthenticateAsServer(serverCertificate, false, false);
+                    //Console.WriteLine("Uwierzyleniono");
+                }
+                catch (Exception)
+                {
+                    await LogRegister.WriteLineAsync(DateTime.Now + ": SSL: failed to authenticate");
+                }
                 Random r1 = new Random();
                 byte[] buffer = new byte[1500];
-                await client.GetStream().ReadAsync(buffer, 0, buffer.Length).ContinueWith(
+                await sslClient.ReadAsync(buffer, 0, buffer.Length).ContinueWith(
                     async (lenght) =>
                     {
                         NVCP frame = new NVCP(Encoding.ASCII.GetString(buffer, 0, lenght.Result));
@@ -316,8 +338,18 @@ namespace Telefon_serwer
                                                         asList[other_login].Token = rng2;
 
                                                         TcpClient second = new TcpClient(asList[other_login].Address);
+                                                        SslStream sslClient2 = new SslStream(second.GetStream(), false);
+                                                        try
+                                                        {
+                                                            sslClient2.AuthenticateAsServer(serverCertificate, false, false);
+                                                            //Console.WriteLine("Uwierzyleniono");
+                                                        }
+                                                        catch (Exception)
+                                                        {
+                                                            await LogRegister.WriteLineAsync(DateTime.Now + ": SSL: failed to authenticate");
+                                                        }
                                                         var sendBytes2 = Encoding.ASCII.GetBytes(sendFrame2.ToString());
-                                                        await second.GetStream().WriteAsync(sendBytes2, 0, sendBytes2.Length);
+                                                        await sslClient2.WriteAsync(sendBytes2, 0, sendBytes2.Length);
                                                     }
                                                     else
                                                     {
@@ -415,7 +447,7 @@ namespace Telefon_serwer
                         }
 
                         byte[] sendBytes = Encoding.ASCII.GetBytes(sendFrame.ToString());
-                        await client.GetStream().WriteAsync(sendBytes, 0, sendBytes.Length);                      
+                        await sslClient.WriteAsync(sendBytes, 0, sendBytes.Length);                      
                     });
             }
         }
@@ -427,17 +459,30 @@ namespace Telefon_serwer
             while (true)
             {
                 TcpClient client = await server.AcceptTcpClientAsync();
+                SslStream sslClient = new SslStream(client.GetStream(), false);
+                try
+                {
+                    sslClient.AuthenticateAsServer(serverCertificate, false, false);
+                    //Console.WriteLine("Uwierzyleniono");
+                }
+                catch (Exception)
+                {
+                    await LogRegister.WriteLineAsync(DateTime.Now + ": SSL: failed to authenticate");
+                }
                 Random r1 = new Random();
                 byte[] buffer = new byte[1500];
-                await client.GetStream().ReadAsync(buffer, 0, buffer.Length).ContinueWith(
+                await sslClient.ReadAsync(buffer, 0, buffer.Length).ContinueWith(
                     async (lenght) =>
                     {
                         // 'login' 
                         var tab = Encoding.ASCII.GetString(buffer).Split(' ');
-                        if (asList[tab[0]].Token == int.Parse(tab[1]))
-                        { 
-                            byte[] xmlFile = File.ReadAllBytes(tab[0] + "_contact.xml");
-                            await client.GetStream().WriteAsync(xmlFile, 0, xmlFile.Length);
+                        if (tab.Length != 2)
+                        {
+                            if (asList[tab[0]].Token == int.Parse(tab[1]))
+                            {
+                                byte[] xmlFile = File.ReadAllBytes(tab[0] + "_contact.xml");
+                                await sslClient.WriteAsync(xmlFile, 0, xmlFile.Length);
+                            }
                         }               
                     });
             }
@@ -613,6 +658,40 @@ namespace Telefon_serwer
 
             Timer saveXml = new Timer(new TimerCallback(updateAccountList));
             saveXml.Change(0, 60000);
+
+
+            // GENERATE X.509 CERTIFICATE
+            //Console.WriteLine(edcCurve.CurveType);
+
+            //ECCurve curve = ECCurve.NamedCurves.nistP256;
+            //ECDsa edcKey = ECDsa.Create(curve);
+            /*
+            RSA rsa = RSA.Create(2048);
+            X500DistinguishedName name = new X500DistinguishedName("C=PL, OU=Zlociu, O=SigmaCore, CN=TIPserver");
+            CertificateRequest certReq = new CertificateRequest(name, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            X509Certificate2 X509cert = certReq.CreateSelfSigned(DateTime.Now.AddDays(-1), DateTime.Now.AddYears(1));
+            /*
+            File.WriteAllBytes("ServerCertificateNew.pfx", X509cert.Export(X509ContentType.Pkcs12, (string)null));
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine("-----BEGIN CERTIFICATE-----");
+            builder.AppendLine(Convert.ToBase64String(X509cert.Export(X509ContentType.Cert), Base64FormattingOptions.InsertLineBreaks));
+            builder.AppendLine("-----END CERTIFICATE-----");
+            File.WriteAllText("ServerCertificate.cer", builder.ToString());
+            */
+            /*
+            using (Process p = new Process())
+            {
+                p.StartInfo = new ProcessStartInfo
+                {
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    FileName = @"C:\Program Files(x86)\Windows Kits\10\bin\x86 > makecert.exe ",
+                    Arguments = "-n \"CN=TIPserver,O=Zlociu_cert,OU=Poznan University of Techonology,C=PL\" -pe  -sr LocalMachine -a sha256 -m 12 -r -len 2048 -ss My ",
+                    UseShellExecute = false
+                };
+                p.Start();
+            }
+            */
+
             /*
             UserContactList ucList = new UserContactList("Marcin");
             ucList.add("Lukasz", new ContactItem(nick: uaList["Lukasz"]));
@@ -625,7 +704,19 @@ namespace Telefon_serwer
                 Console.WriteLine("{0} {1}", elem.Key, elem.Value.ToString());
             }
             */
-            
+            X509Store store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
+            store.Open(OpenFlags.ReadOnly);
+            X509Certificate2Collection col = store.Certificates.Find(X509FindType.FindByIssuerName, "Zlociu_cert", false).Find(X509FindType.FindByTimeValid,DateTime.Now,false);
+            //X509Certificate2Collection col = store.Certificates;
+            //foreach( X509Certificate2 cert in col)
+            //{
+            //    Console.WriteLine(cert.Thumbprint);
+            //}
+
+            //Console.WriteLine(col[0].IssuerName.Name);
+            if (col.Count != 0) serverCertificate = new X509Certificate(col[0]);
+            //else Console.WriteLine("nie ma");
+
             LogRegister.AutoFlush = true;
             string ipAddr = args[0];
             Console.WriteLine("Server is running on IP address: {0}", args[0]);
