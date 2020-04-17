@@ -128,6 +128,23 @@ namespace Telefon_serwer
         }
 
         /// <summary>
+        /// Remove all accounts
+        /// </summary>
+        /// <returns></returns>
+        public int clear()
+        {
+            try
+            {
+                usersList.Clear();
+                return 0;
+            }
+            catch (Exception)
+            {
+                return 1;
+            }
+        }
+
+        /// <summary>
         /// Change user password 
         /// </summary>
         /// <param name="login">identifier number</param>
