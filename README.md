@@ -9,9 +9,11 @@ Project of VoIP communicator, contains client app and server. Server is simple a
 #### For serwer app: 
   - .NET Framework 4.7 
   - XML
+  - SSL
 #### For klient app: 
   - .NET Framework 4.7
   - XML
+  - SSL
 
 ## Addition
 
