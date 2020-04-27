@@ -6,7 +6,9 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Authentication;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -35,12 +37,34 @@ namespace Telefon_klient
          */
         private NVCP Send_MYSTATUS(nvcpOperStatus status)
         {
-            TcpClient client = new TcpClient(localaddr.ToString(), _control_port);
+            TcpClient client = new TcpClient(Form1.machineName, _control_port);
+            SslStream sslStream = new SslStream(
+               client.GetStream(),
+               false,
+               new RemoteCertificateValidationCallback(Form1.ValidateServerCertificate),
+               null
+               );
+            try
+            {
+                sslStream.AuthenticateAsClient(Form1.serverName);
+            }
+            catch (AuthenticationException e)
+            {
+                Console.WriteLine("Exception: {0}", e.Message);
+                if (e.InnerException != null)
+                {
+                    Console.WriteLine("Inner exception: {0}", e.InnerException.Message);
+                }
+                Console.WriteLine("Authentication failed - closing the connection.");
+                client.Close();
+
+            }
             NVCP sendFrame = new NVCP(nvcpOperation.MY_STATUS, status, login + ' ' + user_token.ToString());
             byte[] sendBytes = Encoding.ASCII.GetBytes(sendFrame.ToString());
-            client.GetStream().WriteAsync(sendBytes, 0, sendBytes.Length);
+            sslStream.Write(sendBytes);
+            sslStream.Flush();
             byte[] buffer = new byte[1500];
-            client.GetStream().Read(buffer, 0, buffer.Length);
+            sslStream.Read(buffer, 0, buffer.Length);
             NVCP frame = new NVCP(Encoding.ASCII.GetString(buffer, 0, buffer.Length));
             tokenupdate(frame);
             return frame;
