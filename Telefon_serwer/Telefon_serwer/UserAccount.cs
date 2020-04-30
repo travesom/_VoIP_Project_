@@ -183,7 +183,7 @@ namespace Telefon_serwer
             }
         }
 
-        public IEnumerator<KeyValuePair<string,UserAccount>> GetEnumerator()
+        public IEnumerator<KeyValuePair<string, UserAccount>> GetEnumerator()
         {
             return usersList.GetEnumerator();
         }
@@ -235,7 +235,7 @@ namespace Telefon_serwer
                     foreach (XmlNode contact in node.ChildNodes)
                     {
                         if (contact.Name == "password") ua.PasswordSHA = contact.FirstChild.Value;
-                        if (contact.Name == "pinned") ua.NickName = contact.FirstChild.Value;
+                        if (contact.Name == "nickname") ua.NickName = contact.FirstChild.Value;
                     }
                     usersList.TryAdd(node.Attributes["id"].Value, ua);
                 }
@@ -263,7 +263,7 @@ namespace Telefon_serwer
                         foreach (XmlNode contact in node.ChildNodes)
                         {
                             if (contact.Name == "password") ua.PasswordSHA = contact.FirstChild.Value;
-                            if (contact.Name == "pinned") ua.NickName = contact.FirstChild.Value;
+                            if (contact.Name == "nickname") ua.NickName = contact.FirstChild.Value;
                         }
                         dict.usersList.TryAdd(node.Attributes["id"].Value, ua);
                     }

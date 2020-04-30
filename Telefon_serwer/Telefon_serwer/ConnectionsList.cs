@@ -82,5 +82,10 @@ namespace Telefon_serwer
             }
             return 1;
         }
+
+        public IEnumerator<ConnectionPair> GetEnumerator()
+        {
+            return list.GetEnumerator();
+        }
     }
 }

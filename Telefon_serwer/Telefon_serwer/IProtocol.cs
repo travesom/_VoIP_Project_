@@ -56,7 +56,6 @@ namespace Protocols
 
     interface IProtocol
     {
-        //Use for encode message from string to object
         void encodeMsg(string msg);
     }
 }

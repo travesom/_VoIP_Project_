@@ -12,6 +12,7 @@ using Protocols;
 using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
+using System.Text.RegularExpressions;
 
 namespace Telefon_serwer
 {
@@ -29,7 +30,7 @@ namespace Telefon_serwer
         public static ConnectionsList connectList = new ConnectionsList();
         public static UserAccountList uaList = new UserAccountList();
 
-        public static StreamWriter LogRegister = new StreamWriter("first_log.log");
+        public static StreamWriter LogRegister;
         public static X509Certificate2 serverCertificate = null; 
 
         static async Task loginTask(string ipAddr)
@@ -73,11 +74,19 @@ namespace Telefon_serwer
                                     {
                                         login = data.Split(' ')[0];
                                         passwd = data.Split(' ')[1];
+                                        Regex rgx = new Regex(@"^[A-Za-z][A-Za-z0-9_\.]*@[A-Za-z]*\.[a-z]{2,3}$");
+                                        if (!rgx.IsMatch(login))
+                                        {
+                                            sendFrame.ProtocolStatus = IStatus.DATA_FAIL;
+                                            await LogRegister.WriteLineAsync(DateTime.Now + ": Protocol: " + "error: wrong dataframe");
+                                            goto labelSend;
+                                        }
                                     }
-                                    catch(Exception)
+                                    catch (Exception)
                                     {
                                         sendFrame.ProtocolStatus = IStatus.DATA_FAIL;
                                         await LogRegister.WriteLineAsync(DateTime.Now + ": Protocol: " + "error: wrong dataframe");
+                                        goto labelSend;
                                     }
                                     byte[] hash;
                                     
@@ -121,22 +130,36 @@ namespace Telefon_serwer
                                 {
                                     string login = "";
                                     string passwd = "";
+                                    string nickname = "null";
                                     try
                                     {
                                         login = data.Split(' ')[0];
                                         passwd = data.Split(' ')[1];
+                                        try
+                                        {
+                                            nickname = data.Split(' ')[2];
+                                        }
+                                        catch (Exception) { }
+                                        Regex rgx = new Regex(@"^[A-Za-z][A-Za-z0-9_\.]*@[A-Za-z]*\.[a-z]{2,3}$");
+                                        if (!rgx.IsMatch(login))
+                                        {
+                                            sendFrame.ProtocolStatus = IStatus.DATA_FAIL;
+                                            await LogRegister.WriteLineAsync(DateTime.Now + ": Protocol: " + "error: wrong dataframe");
+                                            goto labelSend;
+                                        }
                                     }
                                     catch (Exception)
                                     {
                                         sendFrame.ProtocolStatus = IStatus.DATA_FAIL;
                                         await LogRegister.WriteLineAsync(DateTime.Now + ": Protocol: " + "error: wrong dataframe");
+                                        goto labelSend;
                                     }
                                     byte[] hash;
                                     using (SHA256 sha256 = SHA256.Create())
                                     {
                                         hash = sha256.ComputeHash(Encoding.ASCII.GetBytes(passwd));
                                     }
-                                    if (uaList.createAccount(login, Convert.ToBase64String(hash)) == 0)
+                                    if (uaList.createAccount(login, Convert.ToBase64String(hash), nickname) == 0)
                                         {
                                             sendFrame.OperationStatus = ulpOperStatus.SUCCESS;
                                             await LogRegister.WriteLineAsync(DateTime.Now + ": Account: " + "succesfully registered: " + login);
@@ -238,6 +261,7 @@ namespace Telefon_serwer
                                 }
                                 break;
                         }
+                        labelSend:
                         byte[] sendBytes = Encoding.ASCII.GetBytes(sendFrame.ToString());
                         await sslClient.WriteAsync(sendBytes, 0, sendBytes.Length);
                     });
@@ -500,13 +524,21 @@ namespace Telefon_serwer
                         var tab = Encoding.ASCII.GetString(buffer).Split(' ');
                         if (tab.Length == 2)
                         {
-                            if (asList[tab[0]].Token == int.Parse(tab[1]))
-                            {
-                                byte[] xmlFile = File.ReadAllBytes(tab[0] + "_contact.xml");
-                                int rnd = r1.Next(1000000, 9999999);
-                                asList[tab[0]].Token = rnd;
-                                await sslClient.WriteAsync(Encoding.ASCII.GetBytes(rnd.ToString()), 0, 7);
-                                await sslClient.WriteAsync(xmlFile, 0, xmlFile.Length);
+                            if (asList.exist(tab[0]))
+                                {
+                                if (asList[tab[0]].Token == int.Parse(tab[1]))
+                                {
+                                    byte[] xmlFile = File.ReadAllBytes(tab[0] + "_contact.xml");
+                                    int rnd = r1.Next(1000000, 9999999);
+                                    asList[tab[0]].Token = rnd;
+                                    await sslClient.WriteAsync(Encoding.ASCII.GetBytes(rnd.ToString()), 0, 7);
+                                    await sslClient.WriteAsync(xmlFile, 0, xmlFile.Length);
+                                }
+                                else
+                                {
+                                    string s = "error";
+                                    await sslClient.WriteAsync(Encoding.ASCII.GetBytes(s), 0, s.Length);
+                                }
                             }
                             else
                             {
@@ -517,10 +549,19 @@ namespace Telefon_serwer
                         else if (tab.Length == 3)
                         {
                             // 'login' 'token' 'data'
-                            if (asList[tab[0]].Token == int.Parse(tab[1]))
+                            try
                             {
-                                File.WriteAllText(tab[0] + "_contact.xml", tab[2]);
+                                if (asList[tab[0]].Token == int.Parse(tab[1]))
+                                {
+                                    File.WriteAllText(tab[0] + "_contact.xml", tab[2]);
+                                }
                             }
+                            catch (Exception) { }
+                        }
+                        else
+                        {
+                            string s = "error";
+                            await sslClient.WriteAsync(Encoding.ASCII.GetBytes(s), 0, s.Length);
                         }
                     });
             }
@@ -594,12 +635,51 @@ namespace Telefon_serwer
                                                 switch (tab[2])
                                                 {
                                                     case "--all": GetAllActiveSubscribers(); break;
+                                                    case "--type":
+                                                        {
+                                                            try
+                                                            {
+                                                                switch (tab[3])
+                                                                {
+                                                                    case "READY":
+                                                                        {
+                                                                            Console.WriteLine("READY:");
+                                                                            foreach (var i in asList)
+                                                                            {
+                                                                                if(i.Value.Status == nvcpOperStatus.READY)
+                                                                                {
+                                                                                    Console.WriteLine(i.Key + ' ' + i.Value.Token);
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                        break;
+                                                                    case "BUSY":
+                                                                        {
+                                                                            Console.WriteLine("BUSY:");
+                                                                            foreach (var i in asList)
+                                                                            {
+                                                                                if (i.Value.Status == nvcpOperStatus.BUSY || i.Value.Status == nvcpOperStatus.WAITING_CONNECTION)
+                                                                                {
+                                                                                    Console.WriteLine(i.Key + ' ' + i.Value.Token);
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                        break;
+                                                                    default: Console.WriteLine("Invalid type");break;
+                                                                }
+                                                            }
+                                                            catch (Exception)
+                                                            {
+                                                                Console.WriteLine("get subscriber --type <typeName>");
+                                                            }
+                                                        }
+                                                        break;
                                                     case "": break;
                                                     default:
                                                         {
                                                             try
                                                             {
-                                                                Console.WriteLine(asList[tab[2]]);
+                                                                Console.WriteLine(tab[2] + ' ' + asList[tab[2]].Status + ' ' + asList[tab[2]].Address.Address + ':' + asList[tab[2]].Address.Port);
                                                             }
                                                             catch (Exception)
                                                             {
@@ -611,7 +691,7 @@ namespace Telefon_serwer
                                             }
                                             catch (Exception)
                                             {
-                                                Console.WriteLine("get subscriber [<name> | --all] ");
+                                                Console.WriteLine("get subscriber [<name> | --all | --type <typeName>] ");
                                             }
                                         }
                                         break;
@@ -644,6 +724,7 @@ namespace Telefon_serwer
                                                         break;
                                                     case "--nologin": 
                                                         {
+                                                            
                                                             foreach(var elem in uaList)
                                                             {
                                                                 if(!asList.exist(elem.Key))
@@ -734,7 +815,8 @@ namespace Telefon_serwer
                                         {
                                             Console.WriteLine("Get info about subscribers or existing accounts");
                                             Console.WriteLine("> get account  [<name> | --all] ");
-                                            Console.WriteLine("> get subscriber [<name> | --all] ");
+                                            Console.WriteLine("> get subscriber [<name> | --all | --type <READY | BUSY>] ");
+
                                         }
                                         break;
                                     case "delete":
@@ -755,6 +837,11 @@ namespace Telefon_serwer
                                             Console.WriteLine("Shows info about server");
                                         }
                                         break;
+                                    case "clear":
+                                        {
+                                            Console.WriteLine("Clear command window");
+                                        }
+                                        break;
                                     case "shutdown":
                                         {
                                             Console.WriteLine("Close server with optional return value");
@@ -763,10 +850,11 @@ namespace Telefon_serwer
                                     default:
                                         {
                                             Console.WriteLine("Simple server dev console help:");
-                                            Console.WriteLine("> get [account | subscriber] [<name> | --all] ");
+                                            Console.WriteLine("> get [account | subscriber] [<name> | --all | --type <name>] ");
                                             Console.WriteLine("> delete [account | subscriber] [<param>]");
                                             Console.WriteLine("> time");
                                             Console.WriteLine("> info");
+                                            Console.WriteLine("> clear");
                                             Console.WriteLine("> shutdown <return code>");
                                             Console.WriteLine("> help <command>");
                                         }
@@ -776,10 +864,11 @@ namespace Telefon_serwer
                             catch(Exception)
                             {
                                 Console.WriteLine("Simple server dev console help:");
-                                Console.WriteLine("> get [account | subscriber] [<name> | --all] ");
+                                Console.WriteLine("> get [account | subscriber] [<name> | --all | --type <name>] ");
                                 Console.WriteLine("> delete [account | subscriber] [<param>]");
                                 Console.WriteLine("> time");
                                 Console.WriteLine("> info");
+                                Console.WriteLine("> clear");
                                 Console.WriteLine("> shutdown <return code>");
                                 Console.WriteLine("> help <command>");
                             }
@@ -814,6 +903,7 @@ namespace Telefon_serwer
                                      
                         }
                         break;
+                    case "clear": Console.Clear();break;
                     case "cd": Console.WriteLine("Not this time"); break;
                     default: Console.WriteLine("error"); break;
                 }
@@ -843,6 +933,13 @@ namespace Telefon_serwer
             Console.SetWindowSize(64, 18);
            
             uaList.readFromXML();
+
+            foreach (var file in Directory.GetFiles(Directory.GetCurrentDirectory()))
+            {
+                FileInfo fi = new FileInfo(file);
+                if (fi.CreationTime < DateTime.Now.AddDays(-6) && fi.Name.Contains("_log.log")) fi.Delete();
+            }
+
             //uaList.writeToXML();
 
             Timer saveLog = new Timer(new TimerCallback(newlog));
@@ -852,15 +949,19 @@ namespace Telefon_serwer
             saveXml.Change(0, 60000);
 
 
-            // GENERATE X.509 CERTIFICATE
+            // ---------------------< GENERATE X.509 CERTIFICATE >-----------------------
             /*
             RSA rsa = RSA.Create(2048);
-            X500DistinguishedName name = new X500DistinguishedName("C=PL, OU=Zlociu, O=SigmaCore, CN=TIPserver");
+            X500DistinguishedName name = new X500DistinguishedName("CN=TIPserver");
             CertificateRequest certReq = new CertificateRequest(name, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-            X509Certificate2 X509cert = certReq.CreateSelfSigned(DateTime.Now.AddDays(-1), DateTime.Now.AddYears(1));
+            X509Store general = new X509Store(StoreName.Root, StoreLocation.LocalMachine);
+            general.Open(OpenFlags.ReadOnly);
+            X509Certificate2Collection coll = general.Certificates.Find(X509FindType.FindByIssuerName, "Zlociu Cert Root", false);
+            byte[] numSer = { 78, 78, 79, 79, 34, 34, 56, 56 };
+            X509Certificate2 X509cert = certReq.Create(coll[0], DateTime.Now, DateTime.Now.AddYears(1), numSer);
 
             File.WriteAllBytes("ServerCertificateNew.pfx", X509cert.Export(X509ContentType.Pfx, (string)null));
-            
+            */
             /*
             using (Process p = new Process())
             {
@@ -876,21 +977,9 @@ namespace Telefon_serwer
             }
             */
 
-            /*
-            UserContactList ucList = new UserContactList("Marcin");
-            ucList.add("Lukasz", new ContactItem(nick: uaList["Lukasz"]));
-            ucList.add("Juliusz", new ContactItem(nick: uaList["Juliusz"], pin: true));
-            ucList.writeToXML();
-
-            UserContactList ucList2 = UserContactList.readFromXML("Marcin");
-            foreach (var elem in ucList2.ContactList)
-            {
-                Console.WriteLine("{0} {1}", elem.Key, elem.Value.ToString());
-            }
-            */
             X509Store store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
             store.Open(OpenFlags.ReadOnly);
-            X509Certificate2Collection col = store.Certificates.Find(X509FindType.FindByIssuerName, "Zlociu Cert Root", false).Find(X509FindType.FindByTimeValid,DateTime.Now,false);
+            X509Certificate2Collection col = store.Certificates.Find(X509FindType.FindByIssuerName, "Zlociu Cert Root", true).Find(X509FindType.FindByTimeValid,DateTime.Now,false);
             //X509Certificate2Collection col = store.Certificates;
             //foreach( X509Certificate2 cert in col)
             //{
@@ -901,6 +990,7 @@ namespace Telefon_serwer
             if (col.Count != 0) serverCertificate = new X509Certificate2(col[0]);
             //else Console.WriteLine("nie ma");
 
+            // -------------------------------< START TASKS >-----------------------------------
             LogRegister.AutoFlush = true;
             string ipAddr = args[0];
             Console.WriteLine("Server is running on IP address: {0}", args[0]);
