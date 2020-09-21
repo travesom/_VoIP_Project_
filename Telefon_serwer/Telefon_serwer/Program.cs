@@ -13,6 +13,7 @@ using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using System.Text.RegularExpressions;
+using System.Security;
 
 namespace Telefon_serwer
 {
@@ -31,8 +32,9 @@ namespace Telefon_serwer
         public static UserAccountList uaList = new UserAccountList();
 
         public static StreamWriter LogRegister;
-        public static X509Certificate2 serverCertificate = null; 
+        public static X509Certificate2 serverCertificate = null;
 
+        #region Server Tasks
         static async Task loginTask(string ipAddr)
         {             
             TcpListener server = new TcpListener(IPAddress.Parse(ipAddr), 8086);
@@ -528,7 +530,7 @@ namespace Telefon_serwer
                                 {
                                 if (asList[tab[0]].Token == int.Parse(tab[1]))
                                 {
-                                    byte[] xmlFile = File.ReadAllBytes(tab[0] + "_contact.xml");
+                                    byte[] xmlFile = File.ReadAllBytes(tab[0].Replace('@','-') + "_contact.xml");
                                     int rnd = r1.Next(1000000, 9999999);
                                     asList[tab[0]].Token = rnd;
                                     await sslClient.WriteAsync(Encoding.ASCII.GetBytes(rnd.ToString()), 0, 7);
@@ -553,7 +555,7 @@ namespace Telefon_serwer
                             {
                                 if (asList[tab[0]].Token == int.Parse(tab[1]))
                                 {
-                                    File.WriteAllText(tab[0] + "_contact.xml", tab[2]);
+                                    File.WriteAllText(tab[0].Replace('@','-') + "_contact.xml", tab[2]);
                                 }
                             }
                             catch (Exception) { }
@@ -566,7 +568,7 @@ namespace Telefon_serwer
                     });
             }
         }
-
+        #endregion
         static void GetAllAccounts()
         {
             Console.WriteLine("All accounts:");
@@ -587,326 +589,366 @@ namespace Telefon_serwer
 
         static Task controlShellTask()
         {
-            while(true)
+            while (true)
             {
-                Console.Write("\nZ:\\> ");
-                string line = Console.ReadLine();
-                var tab = line.Split(' ');
-                switch(tab[0])
+                loginlabel:
+                string securePwd = "";
+                ConsoleKeyInfo key;
+
+                Console.Write("Please log in: ");
+                do
                 {
-                    case "get":
+                    key = Console.ReadKey(true);
+
+                    // Ignore any key out of range.
+                    if (((int)key.Key) >= 65 && ((int)key.Key <= 120))
+                    {
+                        // Append the character to the password.
+                        securePwd += (key.KeyChar);
+                    }
+                    // Exit if Enter key is pressed.
+                } while (key.Key != ConsoleKey.Enter);
+                Console.WriteLine();
+                if (securePwd == "admin")
+                {
+                    while (true)
+                    {
+                        Console.Write("\nZ:\\> ");
+                        string line = Console.ReadLine();
+                        var tab = line.Split(' ');
+                        switch (tab[0])
                         {
-                            try
-                            {
-                                switch (tab[1])
+                            case "get":
                                 {
-                                    case "account":
+                                    try
+                                    {
+                                        switch (tab[1])
                                         {
-                                            try
-                                            {
-                                                switch (tab[2])
+                                            case "account":
                                                 {
-                                                    case "--all": GetAllAccounts(); break;
-                                                    case "": break;
-                                                    default:
+                                                    try
+                                                    {
+                                                        switch (tab[2])
                                                         {
-                                                            try
-                                                            {
-                                                                Console.WriteLine(tab[2] + ' ' + uaList[tab[2]]);
-                                                            }
-                                                            catch (Exception)
-                                                            {
-                                                                Console.WriteLine("No account exists");
-                                                            }
-                                                        }
-                                                        break;
-                                                }
-                                            }
-                                            catch (Exception)
-                                            {
-                                                Console.WriteLine("error: get account [<name> | --all] ");
-                                            }
-                                        }
-                                        break;
-                                    case "subscriber":
-                                        {
-                                            try
-                                            {
-                                                switch (tab[2])
-                                                {
-                                                    case "--all": GetAllActiveSubscribers(); break;
-                                                    case "--type":
-                                                        {
-                                                            try
-                                                            {
-                                                                switch (tab[3])
+                                                            case "--all": GetAllAccounts(); break;
+                                                            case "": break;
+                                                            default:
                                                                 {
-                                                                    case "READY":
+                                                                    try
+                                                                    {
+                                                                        Console.WriteLine(tab[2] + ' ' + uaList[tab[2]]);
+                                                                    }
+                                                                    catch (Exception)
+                                                                    {
+                                                                        Console.WriteLine("No account exists");
+                                                                    }
+                                                                }
+                                                                break;
+                                                        }
+                                                    }
+                                                    catch (Exception)
+                                                    {
+                                                        Console.WriteLine("error: get account [<name> | --all] ");
+                                                    }
+                                                }
+                                                break;
+                                            case "subscriber":
+                                                {
+                                                    try
+                                                    {
+                                                        switch (tab[2])
+                                                        {
+                                                            case "--all": GetAllActiveSubscribers(); break;
+                                                            case "--type":
+                                                                {
+                                                                    try
+                                                                    {
+                                                                        switch (tab[3])
                                                                         {
-                                                                            Console.WriteLine("READY:");
-                                                                            foreach (var i in asList)
-                                                                            {
-                                                                                if(i.Value.Status == nvcpOperStatus.READY)
+                                                                            case "READY":
                                                                                 {
-                                                                                    Console.WriteLine(i.Key + ' ' + i.Value.Token);
+                                                                                    Console.WriteLine("READY:");
+                                                                                    foreach (var i in asList)
+                                                                                    {
+                                                                                        if (i.Value.Status == nvcpOperStatus.READY)
+                                                                                        {
+                                                                                            Console.WriteLine(i.Key + ' ' + i.Value.Token);
+                                                                                        }
+                                                                                    }
                                                                                 }
-                                                                            }
+                                                                                break;
+                                                                            case "BUSY":
+                                                                                {
+                                                                                    Console.WriteLine("BUSY:");
+                                                                                    foreach (var i in asList)
+                                                                                    {
+                                                                                        if (i.Value.Status == nvcpOperStatus.BUSY || i.Value.Status == nvcpOperStatus.WAITING_CONNECTION)
+                                                                                        {
+                                                                                            Console.WriteLine(i.Key + ' ' + i.Value.Token);
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                                break;
+                                                                            default: Console.WriteLine("Invalid type"); break;
                                                                         }
-                                                                        break;
-                                                                    case "BUSY":
+                                                                    }
+                                                                    catch (Exception)
+                                                                    {
+                                                                        Console.WriteLine("get subscriber --type <typeName>");
+                                                                    }
+                                                                }
+                                                                break;
+                                                            case "": break;
+                                                            default:
+                                                                {
+                                                                    try
+                                                                    {
+                                                                        Console.WriteLine(tab[2] + ' ' + asList[tab[2]].Status + ' ' + asList[tab[2]].Address.Address + ':' + asList[tab[2]].Address.Port);
+                                                                    }
+                                                                    catch (Exception)
+                                                                    {
+                                                                        Console.WriteLine("No active subscriber");
+                                                                    }
+                                                                }
+                                                                break;
+                                                        }
+                                                    }
+                                                    catch (Exception)
+                                                    {
+                                                        Console.WriteLine("get subscriber [<name> | --all | --type <typeName>] ");
+                                                    }
+                                                }
+                                                break;
+                                            default: Console.WriteLine("get [subscriber | account]"); break;
+                                        }
+                                    }
+                                    catch (Exception)
+                                    {
+                                        Console.WriteLine("error: get [subscriber | account]"); break;
+                                    }
+                                }
+                                break;
+
+                            case "delete":
+                                {
+                                    try
+                                    {
+                                        switch (tab[1])
+                                        {
+                                            case "account":
+                                                {
+                                                    try
+                                                    {
+                                                        switch (tab[2])
+                                                        {
+                                                            case "--all":
+                                                                {
+                                                                    uaList.clear();
+                                                                }
+                                                                break;
+                                                            case "--nologin":
+                                                                {
+
+                                                                    foreach (var elem in uaList)
+                                                                    {
+                                                                        if (!asList.exist(elem.Key))
                                                                         {
-                                                                            Console.WriteLine("BUSY:");
-                                                                            foreach (var i in asList)
-                                                                            {
-                                                                                if (i.Value.Status == nvcpOperStatus.BUSY || i.Value.Status == nvcpOperStatus.WAITING_CONNECTION)
-                                                                                {
-                                                                                    Console.WriteLine(i.Key + ' ' + i.Value.Token);
-                                                                                }
-                                                                            }
+                                                                            uaList.removeAccount(elem.Key);
                                                                         }
-                                                                        break;
-                                                                    default: Console.WriteLine("Invalid type");break;
+                                                                    }
                                                                 }
-                                                            }
-                                                            catch (Exception)
-                                                            {
-                                                                Console.WriteLine("get subscriber --type <typeName>");
-                                                            }
-                                                        }
-                                                        break;
-                                                    case "": break;
-                                                    default:
-                                                        {
-                                                            try
-                                                            {
-                                                                Console.WriteLine(tab[2] + ' ' + asList[tab[2]].Status + ' ' + asList[tab[2]].Address.Address + ':' + asList[tab[2]].Address.Port);
-                                                            }
-                                                            catch (Exception)
-                                                            {
-                                                                Console.WriteLine("No active subscriber");
-                                                            }
-                                                        }
-                                                        break;
-                                                }
-                                            }
-                                            catch (Exception)
-                                            {
-                                                Console.WriteLine("get subscriber [<name> | --all | --type <typeName>] ");
-                                            }
-                                        }
-                                        break;
-                                    default: Console.WriteLine("get [subscriber | account]"); break;
-                                }
-                            }
-                            catch(Exception)
-                            {
-                                Console.WriteLine("error: get [subscriber | account]"); break;
-                            }
-                        }
-                        break;
-
-                    case "delete":
-                        {
-                            try
-                            {
-                                switch (tab[1])
-                                {
-                                    case "account":
-                                        {
-                                            try
-                                            {
-                                                switch (tab[2])
-                                                {
-                                                    case "--all":
-                                                        {
-                                                            uaList.clear();
-                                                        }
-                                                        break;
-                                                    case "--nologin": 
-                                                        {
-                                                            
-                                                            foreach(var elem in uaList)
-                                                            {
-                                                                if(!asList.exist(elem.Key))
+                                                                break;
+                                                            default:
                                                                 {
-                                                                    uaList.removeAccount(elem.Key);
+                                                                    try
+                                                                    {
+                                                                        uaList.removeAccount(tab[2]);
+                                                                    }
+                                                                    catch (Exception)
+                                                                    {
+                                                                        Console.WriteLine("Account doesn't exist");
+                                                                    }
                                                                 }
-                                                            }
+                                                                break;
                                                         }
-                                                        break;
-                                                    default:
-                                                        {
-                                                            try
-                                                            {
-                                                                uaList.removeAccount(tab[2]);
-                                                            }
-                                                            catch(Exception)
-                                                            {
-                                                                Console.WriteLine("Account doesn't exist");
-                                                            }
-                                                        }
-                                                        break;
+                                                    }
+                                                    catch (Exception)
+                                                    {
+                                                        Console.WriteLine("get account [<name> | --all | --nologin] ");
+                                                    }
                                                 }
-                                            }
-                                            catch (Exception)
-                                            {
-                                                Console.WriteLine("get account [<name> | --all | --nologin] ");
-                                            }
-                                        }
-                                        break;
-                                    case "subscriber":
-                                        {
-                                            try
-                                            {
-                                                switch (tab[2])
+                                                break;
+                                            case "subscriber":
                                                 {
-                                                    case "--all":
+                                                    try
+                                                    {
+                                                        switch (tab[2])
                                                         {
-                                                            asList.clear();
-                                                        }
-                                                        break;
-                                                    case "--noactive":
-                                                        {
-                                                            foreach (var elem in asList)
-                                                            {
-                                                                if (elem.Value.Status == nvcpOperStatus.READY)
+                                                            case "--all":
                                                                 {
-                                                                    asList.remove(elem.Key);
+                                                                    asList.clear();
                                                                 }
-                                                            }
+                                                                break;
+                                                            case "--noactive":
+                                                                {
+                                                                    foreach (var elem in asList)
+                                                                    {
+                                                                        if (elem.Value.Status == nvcpOperStatus.READY)
+                                                                        {
+                                                                            asList.remove(elem.Key);
+                                                                        }
+                                                                    }
+                                                                }
+                                                                break;
+                                                            default:
+                                                                {
+                                                                    try
+                                                                    {
+                                                                        asList.remove(tab[2]);
+                                                                    }
+                                                                    catch (Exception)
+                                                                    {
+                                                                        Console.WriteLine("Subscriber doesn't exist");
+                                                                    }
+                                                                }
+                                                                break;
                                                         }
-                                                        break;
-                                                    default:
-                                                        {
-                                                            try
-                                                            {
-                                                                asList.remove(tab[2]);
-                                                            }
-                                                            catch (Exception)
-                                                            {
-                                                                Console.WriteLine("Subscriber doesn't exist");
-                                                            }
-                                                        }
-                                                        break;
+                                                    }
+                                                    catch (Exception)
+                                                    {
+                                                        Console.WriteLine("get subscriber [<name> | --all --noactive] ");
+                                                    }
                                                 }
-                                            }
-                                            catch(Exception)
-                                            {
-                                                Console.WriteLine("get subscriber [<name> | --all --noactive] ");
-                                            }
+                                                break;
+                                            default: Console.WriteLine("error: detele [subscriber | account]"); break;
                                         }
-                                        break;
-                                    default: Console.WriteLine("error: detele [subscriber | account]"); break;
+                                    }
+                                    catch (Exception)
+                                    {
+                                        Console.WriteLine("delete [account | subscriber]");
+                                    }
                                 }
-                            }
-                            catch(Exception)
-                            {
-                                Console.WriteLine("delete [account | subscriber]");
-                            }
-                        }
-                        break;
-                    case "help":
-                        {
-                            try
-                            {
-                                switch(tab[1])
+                                break;
+                            case "help":
                                 {
-                                    case "get":
+                                    try
+                                    {
+                                        switch (tab[1])
                                         {
-                                            Console.WriteLine("Get info about subscribers or existing accounts");
-                                            Console.WriteLine("> get account  [<name> | --all] ");
-                                            Console.WriteLine("> get subscriber [<name> | --all | --type <READY | BUSY>] ");
+                                            case "get":
+                                                {
+                                                    Console.WriteLine("Get info about subscribers or existing accounts");
+                                                    Console.WriteLine("> get account  [<name> | --all] ");
+                                                    Console.WriteLine("> get subscriber [<name> | --all | --type <READY | BUSY>] ");
 
-                                        }
-                                        break;
-                                    case "delete":
-                                        {
-                                            Console.WriteLine("Deletes accounts or subscribers");
-                                            Console.WriteLine("> delete account [<name> | --all | --nologin]");
-                                            Console.WriteLine("> delete subscriber [<name> | --all | --noactive]");
+                                                }
+                                                break;
+                                            case "delete":
+                                                {
+                                                    Console.WriteLine("Deletes accounts or subscribers");
+                                                    Console.WriteLine("> delete account [<name> | --all | --nologin]");
+                                                    Console.WriteLine("> delete subscriber [<name> | --all | --noactive]");
 
+                                                }
+                                                break;
+                                            case "time":
+                                                {
+                                                    Console.WriteLine("Shows current time");
+                                                }
+                                                break;
+                                            case "info":
+                                                {
+                                                    Console.WriteLine("Shows info about server");
+                                                }
+                                                break;
+                                            case "clear":
+                                                {
+                                                    Console.WriteLine("Clear command window");
+                                                }
+                                                break;
+                                            case "logout":
+                                                {
+                                                    Console.WriteLine("Logout from terminal");
+                                                }
+                                                break;
+                                            case "shutdown":
+                                                {
+                                                    Console.WriteLine("Close server with optional return value");
+                                                }
+                                                break;
+                                            default:
+                                                {
+                                                    Console.WriteLine("Simple server dev console help:");
+                                                    Console.WriteLine("> get [account | subscriber] [<name> | --all | --type <name>] ");
+                                                    Console.WriteLine("> delete [account | subscriber] [<param>]");
+                                                    Console.WriteLine("> time");
+                                                    Console.WriteLine("> info");
+                                                    Console.WriteLine("> clear");
+                                                    Console.WriteLine("> logout");
+                                                    Console.WriteLine("> shutdown <return code>");
+                                                    Console.WriteLine("> help <command>");
+                                                }
+                                                break;
                                         }
-                                        break;
-                                    case "time":
-                                        {
-                                            Console.WriteLine("Shows current time");
-                                        }
-                                        break;
-                                    case "info":
-                                        {
-                                            Console.WriteLine("Shows info about server");
-                                        }
-                                        break;
-                                    case "clear":
-                                        {
-                                            Console.WriteLine("Clear command window");
-                                        }
-                                        break;
-                                    case "shutdown":
-                                        {
-                                            Console.WriteLine("Close server with optional return value");
-                                        }
-                                        break;
-                                    default:
-                                        {
-                                            Console.WriteLine("Simple server dev console help:");
-                                            Console.WriteLine("> get [account | subscriber] [<name> | --all | --type <name>] ");
-                                            Console.WriteLine("> delete [account | subscriber] [<param>]");
-                                            Console.WriteLine("> time");
-                                            Console.WriteLine("> info");
-                                            Console.WriteLine("> clear");
-                                            Console.WriteLine("> shutdown <return code>");
-                                            Console.WriteLine("> help <command>");
-                                        }
-                                        break;
+                                    }
+                                    catch (Exception)
+                                    {
+                                        Console.WriteLine("Simple server dev console help:");
+                                        Console.WriteLine("> get [account | subscriber] [<name> | --all | --type <name>] ");
+                                        Console.WriteLine("> delete [account | subscriber] [<param>]");
+                                        Console.WriteLine("> time");
+                                        Console.WriteLine("> info");
+                                        Console.WriteLine("> clear");
+                                        Console.WriteLine("> logout");
+                                        Console.WriteLine("> shutdown <return code>");
+                                        Console.WriteLine("> help <command>");
+                                    }
                                 }
-                            }
-                            catch(Exception)
-                            {
-                                Console.WriteLine("Simple server dev console help:");
-                                Console.WriteLine("> get [account | subscriber] [<name> | --all | --type <name>] ");
-                                Console.WriteLine("> delete [account | subscriber] [<param>]");
-                                Console.WriteLine("> time");
-                                Console.WriteLine("> info");
-                                Console.WriteLine("> clear");
-                                Console.WriteLine("> shutdown <return code>");
-                                Console.WriteLine("> help <command>");
-                            }
+                                break;
+                            case "info":
+                                {
+                                    Console.WriteLine("------< VoIP Server >------");
+                                    Console.WriteLine("Simple asynchronous server provides VoIP connections. \n");
+                                    Console.WriteLine("Github project:\n> https://github.com/travesom/_VoIP_Project_ \n");
+                                    Console.WriteLine("Version 1.05a \n");
+                                    Console.WriteLine("Certificate thumbprint:");
+                                    Console.WriteLine(serverCertificate.Thumbprint);
+                                }
+                                break;
+                            case "time":
+                                {
+                                    Console.WriteLine("Current time: " + DateTime.Now);
+                                }
+                                break;
+                            case "logout":
+                                {
+                                    goto loginlabel;
+                                }
+                            case "shutdown":
+                                {
+                                    Console.WriteLine("Are You sure ? y/n");
+                                    string shut = Console.ReadLine();
+                                    if (shut.ToUpper() == "Y" || shut == "YES")
+                                    {
+                                        LogRegister.Close();
+                                        try
+                                        {
+                                            Environment.Exit(int.Parse(tab[1]));
+                                        }
+                                        catch (Exception)
+                                        {
+                                            Environment.Exit(0);
+                                        }
+                                    }
+                                }
+                                break;
+                            case "clear": Console.Clear(); break;
+                            case "cd": Console.WriteLine("Not this time"); break;
+                            default: Console.WriteLine("error"); break;
                         }
-                        break;
-                    case "info":
-                        {
-                            Console.WriteLine("------< VoIP Server >------");
-                            Console.WriteLine("Simple asynchronous server provides VoIP connections. \n");
-                            Console.WriteLine("Github project:\n> https://github.com/travesom/_VoIP_Project_ \n");
-                            Console.WriteLine("Version 1.03a \n");
-                            Console.WriteLine("Certificate thumbprint:");
-                            Console.WriteLine(serverCertificate.Thumbprint);
-                        }
-                        break;
-                    case "time":
-                        {
-                            Console.WriteLine("Current time: " + DateTime.Now);
-                        }
-                        break;
-                    case "shutdown":
-                        {
-                            LogRegister.Close();
-                            try
-                            { 
-                                Environment.Exit(int.Parse(tab[1]));
-                            }
-                            catch(Exception)
-                            {
-                                Environment.Exit(0);
-                            }
-                                     
-                        }
-                        break;
-                    case "clear": Console.Clear();break;
-                    case "cd": Console.WriteLine("Not this time"); break;
-                    default: Console.WriteLine("error"); break;
+                    }
                 }
+                else { Console.WriteLine("Wrong password"); }
             }
         }
 
@@ -977,7 +1019,7 @@ namespace Telefon_serwer
             }
             */
 
-            X509Store store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
+            X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
             store.Open(OpenFlags.ReadOnly);
             X509Certificate2Collection col = store.Certificates.Find(X509FindType.FindByIssuerName, "Zlociu Cert Root", true).Find(X509FindType.FindByTimeValid,DateTime.Now,false);
             //X509Certificate2Collection col = store.Certificates;

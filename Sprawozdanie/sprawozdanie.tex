@@ -1,0 +1,312 @@
+\documentclass[12pt,a4paper]{article}
+\title{\Large Politechnika Poznańska \vspace{3cm}\\ \textbf{\LARGE {Telefonia IP}}\\ \vspace{0.7cm} Dokumentacja projektowa \\ \vspace{0.2cm} \textit{NoTitleCall} }
+\author{Juliusz Horowski 136247 \\ juliusz.horowski@student.put.poznan.pl \and Marcin Złotek 136334 \\ marcin.zlotek@student.put.poznan.pl }
+\date{}
+
+\usepackage{geometry}
+\geometry{a4paper,left=30mm,right=30mm} %szerokosc marginesów lewy i prawy
+
+\usepackage[T1]{fontenc} 			%\
+\usepackage{polski}					% \ustawianie polskich liter
+\usepackage[utf8]{inputenc}			% /
+\usepackage[english,polish]{babel}	%/
+\usepackage{hyperref}
+
+
+\setlength{\tabcolsep}{18pt} % szerokosc pojedynczej kolumny
+\renewcommand{\arraystretch}{1.5} % wyzszy kazdy wiersz  w tabeli
+\usepackage{rotating} %obracanie tabel, ...
+\usepackage{booktabs} %linie wydzielajace w tabeli
+\usepackage{caption} %odstepy
+\usepackage{amsmath}
+\usepackage{indentfirst} % wciecia w pierwszym akapicie 
+\usepackage{longtable} %wielostronicowe tabele
+\usepackage{multirow} %komórka ma wiele wierszy
+\usepackage{multicol}
+\usepackage{enumitem} %zaawansowane listy
+\usepackage{graphicx}
+
+\captionsetup[table]{skip=8pt} %przerwa miedzy tytulem tabeli i tabela
+\captionsetup[tabular]{belowskip=8pt}
+
+
+\begin{document}
+	\begin{titlepage}
+		
+		\clearpage
+		
+		\maketitle
+		
+		\thispagestyle{empty}
+		\vfill
+		\begin{center}
+			\large Poznań, 2020
+		\end{center}
+	\end{titlepage}
+
+	\tableofcontents
+	\newpage
+	
+	\section{Ogólna charakterystyka}
+	\par Tematem projektu jest system komunikacji głosowej poprzez protokół IP, przeznaczona dla rozmów 1:1. System będzie umożliwiał bezpieczne prowadzenie rozmów, a także czatu tekstowego. Aplikacja klienta będzie posiadała interfejs graficzny. \\
+	Projekt nosi nazwę \textit{NoTitleCall}, sloganem jest: ,,\textit{listen a lot, talk more}''. % słuchaj dużo, mów więcej / listen a lot, say more
+	
+	\section{Architektura systemu}
+	\par Architektura systemu jest w postaci klient-serwer. Użytkownik będzie się łączył z serwerem w celu nawiązania połączenia z innym użytkownikiem. Cała transmisja będzie prowadzona poprzez serwer; zarówno rozmowa, czat tekstowy jak i pakiety informacyjne dla serwera. 
+	\par Do komunikacji z serwerem służy protokół TCP oraz własna implementacja protokołów do nawiązywania połączenia. Do przechowywania danych o użytkownikach serwer wykorzystuje pliki \textit{XML}. Poufność przekazywanych danych jest zapewniona przez protokół \textit{TLS}.
+	
+	\section{Wymagania}
+	
+	\subsection{Funkcjonalne}
+	\par Wymagania funkcjonalne dla aplikacji klienta i serwera pośredniczącego.
+	\subsubsection{Użytkownik niezalogowany/niezarejestrowany}
+	\par Wymagania dla aplikacji klienta niezalogowanego/niezarejestrowanego:
+	\begin{itemize}
+		\item utworzenie konta użytkownika,
+		\item utworzenie hasła do konta,
+		\item wybór pseudonimu użytkownika,
+	\end{itemize}
+	\subsubsection{Użytkownik zalogowany}
+	\par Wymagania dla aplikacji klienta zalogowanego:
+	\begin{itemize}
+		\item prowadzenie czatu głosowego,
+		\item prowadzenie czatu tekstowego (z tym samym użytkownikiem co czat głosowy),
+		\item wybór osoby z którą chcemy nawiązać kontakt,
+		\item nawiązanie połączenia z innym użytkownikiem,
+		\item zawieszenie połączenia,
+		\item zakończenie połączenia,
+		\item wybór motywu graficznego,
+		\item zmiana głośności rozmówcy,
+		\item wyciszenie rozmówcy,
+		\item przechowywanie historię połączeń w formie listy ostatnich 20 połączeń,
+		\item wyświetlanie listy kontaktów, w tym przypiętych na samej górze,
+		\item opisywanie kontaktów użytkownika (np. zmiana nicku).
+	\end{itemize}
+	\subsubsection{Serwer}
+	\par Wymagania dla serwera pośredniczącego w transmisji:
+	\begin{itemize}
+		\item informowanie o dostępności użytkownika (dostępny, niedostępny, nie przeszkadzać),
+		\item informowanie użytkownika o błędach w komunikacji,
+		\item umożlwienie nawiązania połączenia, 
+		\item utrzymanie połączenia, 
+		\item przechowywanie listy kontaktów, 
+		\item przechowywanie informacji dotyczącej użytkowników (hasła, pseudonimy),
+		\item rejestrowanie nowych użytkowników,
+		\item logowanie istniejących użytkowników,
+		\item weryfikacja nadawcy danych przy pomocy jednorazowych tokenów,
+		\item możliwość zalogowania się administratora systemu.
+	\end{itemize}
+	
+	\subsubsection{Administrator serwera}
+	\par Wymagania dla administratora zarządzającego serwerem:
+	\begin{itemize}
+		\item zalogowanie się na serwer,
+		\item sprawdzenia aktualnie zalogowanych użytkowników,
+		\item sprawdzenie logów z powiadomieniami serwera,
+		\item wyłączenia serwera.
+	\end{itemize}
+	
+	\subsection{Pozafunkcjonalne}
+	Wymagania pozafunkcjonalne odnoszące się do całego systemu. Są to wymagania dotyczące wydajności, bezpieczeństwa i użyteczności systemu.
+	\begin{itemize}
+		\item system musi posiadać serwer wielowątkowy,
+		\item serwer posiada stały, znany aplikacji klienckiej, adres IP,
+		\item aplikacja użytkownika posiada graficzny interfejs użytkownika,
+		\item aplikacja użytkownika powinna umożliwić wybór jednego z motywów graficznych: ciemny, jasny,
+		\item komunikacja klient-serwer jest szyfrowana przy pomocy SSL/TLSv1.2,
+		\item komunikacja głosowa pomiędzy użytkownikami musi być szyfrowana,
+		\item komunikacja tekstowa pomiedzy użytkownikami musi być szyfrowana,
+		\item komunikacja odbywa się 1:1,
+		\item czas przesyłu informacji pomiędzy użytkownikami nie powiniem być dłuższy niż 2 sekundy,
+		\item system musi działać na systemie operacyjnym Windows 10 lub nowszym,
+		\item system powinien przechowywać hasła w postaci skrótu utworzonego funkcją SHA-256,
+		\item system powiniem obliczać czas połączenia z dokładnością do 1 sekundy,
+		\item system wymaga połączenia internetowego o przepustowości 100kB/s (kilobajtów na sekundę) i większej,
+		\item system nie powinien retransmitować danych dźwiękowych,
+		\item nazwą identifykacyjną użytkownika jest jego adres e-mail,
+		\item nazwa identyfikacyjna użytkownika musi być unikalna, 
+		\item dane dotyczące użytkowników powinne być przechowywane w plikach XML.
+	\end{itemize}
+	
+	\section{Narzędzia, środowisko, biblioteki}
+	\par Zbiór używanych do stworzenia projektu narzędzi i biliotek. Wymienione zostały także używane środowiska programistyczne (\textit{IDE}), które umożliwiły stworzenie całego systemu. 
+	\begin{itemize}
+		\item Narzędzia
+		\begin{itemize}
+			\item C\#,
+			\item XML,
+			\item LINQ.
+		\end{itemize}
+	
+		\item \'Srodowisko
+		\begin{itemize}
+			\item MS Visual Studio,
+			\item RawCap,
+			\item Wireshark
+			\item MS Visio 2016 
+			\item TeXStudio.
+		\end{itemize}
+	
+		\item Biblioteki / Standardy
+		\begin{itemize}
+			\item X.509,
+			\item SSL/TLSv1.2.
+		\end{itemize}
+	\end{itemize}
+	
+	\newpage
+	\section{Diagramy UML}
+	
+	Diagramy UML przedstawiające budowę i działanie systemu.
+	\subsection{Przypadków użycia}
+	\par Diagram przypadków użycia z podziałem na aktorów. 
+	\begin{figure*}[h!]
+		\begin{center}
+			\includegraphics*[width=.8\textwidth]{UML_przypadki_uzycia.pdf}
+		\end{center}
+		\caption{Diagram UML przypadków użycia}
+	\end{figure*}
+	
+	\pagebreak
+	\subsection{Stanów}
+	\par Diagramy stanów: stanu użytkownika zalogowanego i rozmowy pomiędzy użytkownikami.
+	\begin{figure*}[h!]
+		\begin{center}
+			\includegraphics*[width=.75\textwidth]{UML_stan_zalogowany.pdf}
+		\end{center}
+		\caption{Diagram UML stanów - użytkownik zalogowany}
+	\end{figure*}
+
+	\begin{figure*}[h!]
+		\begin{center}
+			\includegraphics*[width=.65\textwidth]{UML_stan_rozmowa.pdf}
+		\end{center}
+		\caption{Diagram UML stanów - rozmowa użytkownika z innym}
+	\end{figure*}
+	
+	\pagebreak
+	\subsection{Klas}
+	\par Diagramy klas protokołów, aplikacji serwera i klienta.
+	\begin{figure*}[h!]
+		\begin{center}
+			\includegraphics*[width=.8\textwidth]{UML_klas_server.pdf}
+		\end{center}
+		\caption{Diagram UML klas - serwer}
+	\end{figure*}
+	
+	\pagebreak
+	\subsection{Sekwencji}
+	\par Diagramy sekwencji: próby nawiązania połączenia oraz logowania od systemu.
+	
+	\begin{figure*}[h!]
+		\begin{center}
+			\includegraphics*[width=.95\textwidth]{UML_sekwencji_logowanie.pdf}
+		\end{center}
+		\caption{Diagram UML sekwencji - logowanie}
+	\end{figure*}
+	
+	\pagebreak
+	\begin{figure*}[h!]
+		\begin{center}
+			\includegraphics*[width=.95\textwidth]{UML_sekwencji_nawiazanie_rozmowy.pdf}
+		\end{center}
+		\caption{Diagram UML sekwencji - nawiązanie połączenia}
+	\end{figure*}
+	
+	\pagebreak
+	\section{GUI}
+	\par Projekt interfejsu graficznego. 
+	
+	\begin{figure*}[h!]
+		\begin{center}
+			\includegraphics*[width=.7\textwidth]{login_screen.png}
+		\end{center}
+		\caption{Ekran logowania}
+	\end{figure*}
+	
+	\begin{figure*}[h!]
+		\begin{center}
+			\includegraphics*[width=.7\textwidth]{main_screen.png}
+		\end{center}
+		\caption{Ekran główny}
+	\end{figure*}
+	
+	\pagebreak
+	\section{Testy i przebiegi}
+	\par Poniżej przedstawiono fragmenty transmisji klient-serwer. Całość przygotowanej transmisji znajduje się w pliku
+	\textit{tip\_spr.pcap}. 
+	
+	\begin{figure*}[h!]
+		\begin{center}
+			\includegraphics*[width=.75\textwidth]{testy_1.png}
+		\end{center}
+		\caption{Przebieg w programie testującym serwer}
+	\end{figure*}
+
+	\begin{figure*}[h!]
+		\begin{center}
+			\includegraphics*[width=.75\textwidth]{testy_2.png}
+		\end{center}
+		\caption{Przebieg w programie testującym serwer}
+	\end{figure*}
+	
+	\pagebreak
+	
+	\begin{figure*}[h!]
+		\begin{center}
+			\includegraphics*[width=.95\textwidth]{wire_1.png}
+		\end{center}
+		\caption{Fragment przebiegu w programie Wireshark}
+	\end{figure*}
+
+	
+	
+	\pagebreak
+	\section{Podsumowanie}
+	\par Projektu nie udało się dokończyć z powodu braku zaangażowania ze strony współautora pracy. Ukończono prace nad serwerem, protokołami komunikacyjnymi, szyfrowanie połaczeń. Brakuje aplikacji klienta i obsługi dźwięku.
+			
+	\section{Podział pracy}
+	
+	\begin{table*}[h!]
+		\begin{center}
+			\label{tab:table1}
+			\begin{tabular}{|p{.3\textwidth}|p{.6\textwidth}|}
+				
+				\hline
+				\multirow{3}{*}{\large\textbf{Juliusz Horowski}} & aplikacja klienta (w tym GUI) - nie zrobiono\\
+				\cline{2-2} & obsługa dźwięku - nie zrobiono \\
+				\cline{2-2} & sprawozdanie końcowe \\
+				\hline
+				\multirow{5}{*}{\large\textbf{Marcin Złotek}} & aplikacja serwera \\
+				\cline{2-2} & protokoły komunikacyjne \\
+				\cline{2-2} & mechanizm logowania i rejestracji \\
+				\cline{2-2} & szyfrowanie komunikacji klient-serwer \\
+				\cline{2-2} & sprawozdanie końcowe \\
+				\hline
+
+			\end{tabular}
+		\end{center}
+	\end{table*}
+	
+	\subsection{Cele zrealizowane}
+	\par Udało się zrealizować własne protokoły realizujące zadania obsługi użytkowników i połączeń. Jeśli chodzi o aplikacje klienta to zostało ukończone częściowo GUI oraz teoretyczne założenia dotyczące działania. Chodzi m.in. o diagramy UML komunikacji, klas itp. 
+	
+	\subsection{Cele niezrealizowane}
+	\par Nie udało się ukończyć projektu ze powodu braku współpracy ze współautorem projektu. 
+	
+	\subsection{Problemy}
+	Podczas tworzenia aplikacji napotkaliśmy na trudności:
+	\begin{itemize}
+		\item problem z implementacją szyfrowanej komunikacji z serwerem przy pomocy protokołu SSL,
+		\item brak współpracy 
+	\end{itemize}
+	
+	\subsection{Perspektywy rozwoju}
+	\par Przede wszystkim dokończenie projektu. Następnie perspektywy rozwoju, które zwiększą funkcjonalność systemu:
+	\begin{itemize}
+		\item rozszerzenie funkcjonalności rejestracji/logowania o możliwość odzyskiwania zapomnianego hasła,
+		\item rozszerzenie funkcjonalności administratora po zalogowaniu,
+	\end{itemize}
+	
+	
+\end{document}
