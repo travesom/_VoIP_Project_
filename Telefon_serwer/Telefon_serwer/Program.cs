@@ -568,6 +568,97 @@ namespace Telefon_serwer
                     });
             }
         }
+
+        static async Task AudioUploadTask(string ipAddr)
+        {
+            TcpListener server = new TcpListener(IPAddress.Parse(ipAddr), 8091);
+            server.Start();
+            while (true)
+            {
+                TcpClient client = await server.AcceptTcpClientAsync();
+                
+                byte[] buffer = new byte[150];
+                //Console.WriteLine(client.Client.RemoteEndPoint.ToString());
+                await client.GetStream().ReadAsync(buffer, 0, buffer.Length).ContinueWith(
+                    (lenght) =>
+                    {
+                        var data = Encoding.UTF8.GetString(buffer);
+                        var table = data.Substring(0,lenght.Result).Split(' ');
+                        if ( table[0] == "UPLOAD")
+                        {
+                            var fileName = table[1].Replace('.','_') + '_' + DateTime.Now.Ticks.ToString() + ".wav";
+
+                            var response = Encoding.UTF8.GetBytes("OK");
+                            client.GetStream().Write(response,0,response.Length);
+
+                            int stop;
+                            var voice = new byte[1000];
+                            
+                            FileStream file = File.Create(fileName);
+                            do
+                            {
+                                stop = client.GetStream().Read(voice, 0, 1000);
+                                if(stop != 0) file.Write(voice, 0, stop);
+                            } while (stop != 0);
+                            file.Flush();
+                            file.Close();
+                        }
+                        else
+                        {
+                            LogRegister.WriteLine("wrong upload procedure");
+                        }
+                    });
+            }
+        }
+
+        static async Task AudioDownloadTask(string ipAddr)
+        {
+            TcpListener server = new TcpListener(IPAddress.Parse(ipAddr), 8092);
+            server.Start();
+            while (true)
+            {
+                TcpClient client = await server.AcceptTcpClientAsync();
+
+                byte[] buffer = new byte[150];
+                //Console.WriteLine(client.Client.RemoteEndPoint.ToString());
+                await client.GetStream().ReadAsync(buffer, 0, buffer.Length).ContinueWith(
+                    (lenght) =>
+                    {
+                        var data = Encoding.UTF8.GetString(buffer).Substring(0, lenght.Result);
+                        var table = data.Split(' ');
+                        switch (table[0])
+                        {
+                            case "CHECK":
+                                {
+                                    var name = table[1].Replace('.', '_') + '*';
+                                    var files = Directory.GetFiles(Directory.GetCurrentDirectory(), name);
+                                    if(files.Length > 9) client.GetStream().Write(Encoding.UTF8.GetBytes(files.Length.ToString()), 0, 2);
+                                    else client.GetStream().Write(Encoding.UTF8.GetBytes(files.Length.ToString()), 0, 1);
+                                } break;
+                            case "GET":
+                                {
+                                    var name = table[1].Replace('.', '_') + '*';
+                                    var files = Directory.GetFiles(Directory.GetCurrentDirectory(), name);
+                                    if (files.Length != 0)
+                                    {
+                                        var audioFile = File.OpenRead(files[0]);
+                                        while (audioFile.Position != audioFile.Length)
+                                        {
+                                            var audioData = new byte[1000];
+                                            var len = audioFile.Read(audioData, 0, 1000);
+                                            client.GetStream().Write(audioData, 0, len);
+                                        }
+                                        audioFile.Close();
+                                        File.Delete(files[0]);
+                                    }
+                                    
+                                }
+                                break;
+                        }
+                        client.Close();
+                    });
+            }
+        }
         #endregion
         static void GetAllAccounts()
         {
@@ -1045,14 +1136,24 @@ namespace Telefon_serwer
             if ((int)t3.Status < 3) Console.Write(8087 + " ");
             Task t4 = contactListTask(ipAddr);
             if ((int)t4.Status < 3) Console.Write(8089 + " ");
+            
+
+            Task t6 = AudioUploadTask(ipAddr);
+            if ((int)t6.Status < 3) Console.Write(8091 + " ");
+            Task t7 = AudioDownloadTask(ipAddr);
+            if ((int)t7.Status < 3) Console.Write(8092 + " ");
+
             Console.Write('\n');
+
             Task t5 = controlShellTask();
+
             t1.Wait();
             t2.Wait();
             t3.Wait();
             t4.Wait();
             t5.Wait();
-            
+            t6.Wait();
+            t7.Wait();
 
         }
     }
