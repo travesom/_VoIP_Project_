@@ -1,6 +1,6 @@
 \documentclass[12pt,a4paper]{article}
 \title{\Large Politechnika Poznańska \vspace{3cm}\\ \textbf{\LARGE {Telefonia IP}}\\ \vspace{0.7cm} Dokumentacja projektowa \\ \vspace{0.2cm} \textit{NoTitleCall} }
-\author{Juliusz Horowski 136247 \\ juliusz.horowski@student.put.poznan.pl \and Marcin Złotek 136334 \\ marcin.zlotek@student.put.poznan.pl }
+\author{Marcin Złotek 136334 \\ marcin.zlotek@student.put.poznan.pl }
 \date{}
 
 \usepackage{geometry}
@@ -48,11 +48,11 @@
 	\newpage
 	
 	\section{Ogólna charakterystyka}
-	\par Tematem projektu jest system komunikacji głosowej poprzez protokół IP, przeznaczona dla rozmów 1:1. System będzie umożliwiał bezpieczne prowadzenie rozmów, a także czatu tekstowego. Aplikacja klienta będzie posiadała interfejs graficzny. \\
+	\par Tematem projektu jest system komunikacji głosowej poprzez protokół IP. System pełni rolę skrzynki głosowej, na którą mogą nagrać się użytkownicy. Aplikacja klienta będzie posiadała interfejs tekstowy. \\
 	Projekt nosi nazwę \textit{NoTitleCall}, sloganem jest: ,,\textit{listen a lot, talk more}''. % słuchaj dużo, mów więcej / listen a lot, say more
 	
 	\section{Architektura systemu}
-	\par Architektura systemu jest w postaci klient-serwer. Użytkownik będzie się łączył z serwerem w celu nawiązania połączenia z innym użytkownikiem. Cała transmisja będzie prowadzona poprzez serwer; zarówno rozmowa, czat tekstowy jak i pakiety informacyjne dla serwera. 
+	\par Architektura systemu jest w postaci klient-serwer. Użytkownik będzie się łączył z serwerem w celu nagrania lub odebrania wiadomości.
 	\par Do komunikacji z serwerem służy protokół TCP oraz własna implementacja protokołów do nawiązywania połączenia. Do przechowywania danych o użytkownikach serwer wykorzystuje pliki \textit{XML}. Poufność przekazywanych danych jest zapewniona przez protokół \textit{TLS}.
 	
 	\section{Wymagania}
@@ -64,37 +64,26 @@
 	\begin{itemize}
 		\item utworzenie konta użytkownika,
 		\item utworzenie hasła do konta,
-		\item wybór pseudonimu użytkownika,
+		\item zalogowanie się do systemu.
 	\end{itemize}
 	\subsubsection{Użytkownik zalogowany}
 	\par Wymagania dla aplikacji klienta zalogowanego:
 	\begin{itemize}
-		\item prowadzenie czatu głosowego,
-		\item prowadzenie czatu tekstowego (z tym samym użytkownikiem co czat głosowy),
-		\item wybór osoby z którą chcemy nawiązać kontakt,
-		\item nawiązanie połączenia z innym użytkownikiem,
-		\item zawieszenie połączenia,
-		\item zakończenie połączenia,
-		\item wybór motywu graficznego,
-		\item zmiana głośności rozmówcy,
-		\item wyciszenie rozmówcy,
-		\item przechowywanie historię połączeń w formie listy ostatnich 20 połączeń,
-		\item wyświetlanie listy kontaktów, w tym przypiętych na samej górze,
-		\item opisywanie kontaktów użytkownika (np. zmiana nicku).
+		\item nagranie wiadomości głosowej,
+		\item wybór osoby do której chcemy wysłać wiadomość,
+		\item odsłuchanie wiadomości głosowej,
+		\item sprawdzenie czy są dostępne nowe wiadomości głosowe.
 	\end{itemize}
 	\subsubsection{Serwer}
 	\par Wymagania dla serwera pośredniczącego w transmisji:
 	\begin{itemize}
-		\item informowanie o dostępności użytkownika (dostępny, niedostępny, nie przeszkadzać),
 		\item informowanie użytkownika o błędach w komunikacji,
-		\item umożliwienie nawiązania połączenia, 
-		\item utrzymanie połączenia, 
-		\item przechowywanie listy kontaktów, 
 		\item przechowywanie informacji dotyczącej użytkowników (hasła, pseudonimy),
 		\item rejestrowanie nowych użytkowników,
 		\item logowanie istniejących użytkowników,
 		\item weryfikacja nadawcy danych przy pomocy jednorazowych tokenów,
-		\item możliwość zalogowania się administratora systemu.
+		\item możliwość zalogowania się administratora systemu,
+		\item usuwanie odsłuchanych wiadomości z pamięci.
 	\end{itemize}
 	
 	\subsubsection{Administrator serwera}
@@ -113,18 +102,11 @@
 		\item system musi posiadać serwer wielowątkowy,
 		\item serwer posiada stały, znany aplikacji klienckiej, adres IP,
 		\item hasło służące do zalogowania administratora na serwerze musi być niewidoczne podczas wpisywania,
-		\item aplikacja użytkownika posiada graficzny interfejs użytkownika,
-		\item aplikacja użytkownika powinna umożliwić wybór jednego z motywów graficznych: ciemny, jasny,
+		\item aplikacja użytkownika posiada tekstowy interfejs użytkownika,
 		\item komunikacja klient-serwer jest szyfrowana przy pomocy SSL/TLSv1.2,
-		\item komunikacja głosowa pomiędzy użytkownikami musi być szyfrowana,
-		\item komunikacja tekstowa pomiedzy użytkownikami musi być szyfrowana,
-		\item komunikacja odbywa się 1:1,
-		\item czas przesyłu informacji pomiędzy użytkownikami nie powiniem być dłuższy niż 2 sekundy,
 		\item system musi działać na systemie operacyjnym Windows 10 lub nowszym,
 		\item system powinien przechowywać hasła w postaci skrótu utworzonego funkcją SHA-256,
-		\item system powinien obliczać czas połączenia z dokładnością do 1 sekundy,
 		\item system wymaga połączenia internetowego o przepustowości 100kB/s (kilobajtów na sekundę) i większej,
-		\item system nie powinien retransmitować danych dźwiękowych,
 		\item nazwą identyfikacyjną użytkownika jest jego adres e-mail,
 		\item nazwa identyfikacyjna użytkownika musi być unikalna, 
 		\item dane dotyczące użytkowników powinne być przechowywane w plikach XML.
@@ -136,8 +118,7 @@
 		\item Narzędzia
 		\begin{itemize}
 			\item C\#,
-			\item XML,
-			\item LINQ.
+			\item XML.		
 		\end{itemize}
 	
 		\item Środowisko
@@ -152,7 +133,8 @@
 		\item Biblioteki / Standardy
 		\begin{itemize}
 			\item X.509,
-			\item SSL/TLSv1.2.
+			\item SSL/TLSv1.2,
+			\item NAudio v10.
 		\end{itemize}
 	\end{itemize}
 	
@@ -171,19 +153,13 @@
 	
 	\pagebreak
 	\subsection{Stanów}
-	\par Diagramy stanów: stanu użytkownika zalogowanego i rozmowy pomiędzy użytkownikami.
-	\begin{figure*}[h!]
-		\begin{center}
-			\includegraphics*[width=.75\textwidth]{UML_stan_zalogowany.pdf}
-		\end{center}
-		\caption{Diagram UML stanów - użytkownik zalogowany}
-	\end{figure*}
+	\par Diagramy stanów: nagrywanie i odbieranie wiadomości.
 
 	\begin{figure*}[h!]
 		\begin{center}
-			\includegraphics*[width=.65\textwidth]{UML_stan_rozmowa.pdf}
+			\includegraphics*[width=.75\textwidth]{UML_stan_rozmowa.pdf}
 		\end{center}
-		\caption{Diagram UML stanów - rozmowa użytkownika z innym}
+		\caption{Diagram UML stanów - nagrywanie wiadomości (u góry) i odbieranie (u dołu)}
 	\end{figure*}
 	
 	\pagebreak
@@ -193,7 +169,7 @@
 		\begin{center}
 			\includegraphics*[width=.8\textwidth]{UML_klas_server.pdf}
 		\end{center}
-		\caption{Diagram UML klas - serwer}
+		\caption{Diagram UML klas}
 	\end{figure*}
 	
 	\pagebreak
@@ -212,29 +188,22 @@
 		\begin{center}
 			\includegraphics*[width=.95\textwidth]{UML_sekwencji_nawiazanie_rozmowy.pdf}
 		\end{center}
-		\caption{Diagram UML sekwencji - nawiązanie połączenia}
+		\caption{Diagram UML sekwencji - przesłanie wiadomości głosowej}
 	\end{figure*}
 	
 	\pagebreak
 	\section{GUI}
-	\par Projekt interfejsu graficznego. 
+	\par Projekt interfejsu aplikacji klienta i serwera. 
 	
 	\begin{figure*}[h!]
 		\begin{center}
-			\includegraphics*[width=.7\textwidth]{login_screen.png}
+			\includegraphics*[width=.9\textwidth]{main_screen.png}
 		\end{center}
-		\caption{Ekran logowania}
-	\end{figure*}
-	
-	\begin{figure*}[h!]
-		\begin{center}
-			\includegraphics*[width=.7\textwidth]{main_screen.png}
-		\end{center}
-		\caption{Ekran główny}
+		\caption{Ekran główny - aplikacja klienta}
 	\end{figure*}
 	\pagebreak
 	
-	\par Poniżej umieszczono zrzuty ekranu konsoli serwera. Przedstawiono przykładowe komendy dostępne dla administratora po zalogowaniu się. Hasło logowania nie pojawia się przy wpisywaniu, jest ot zabieg celowy.
+	\par Poniżej umieszczono zrzuty ekranu konsoli serwera. Przedstawiono przykładowe komendy dostępne dla administratora po zalogowaniu się. Hasło logowania nie pojawia się przy wpisywaniu, jest to zabieg celowy.
 	\begin{figure*}[h!]
 		\begin{center}
 			\includegraphics*[width=.9\textwidth]{serwer_1.png}
@@ -262,7 +231,7 @@
 	\pagebreak
 	\section{Testy i przebiegi}
 	\par Poniżej przedstawiono fragmenty transmisji klient-serwer. Całość przygotowanej transmisji znajduje się w pliku
-	\textit{tip\_spr.pcap}. 
+	\textit{tip\_spr.pcap}. Transmisja (wysłanie i odebranie) przykładowej wiadomości głosowej znajduje się w pliku \textit{tip\_voice.pcap}.
 	
 	\begin{figure*}[h!]
 		\begin{center}
@@ -287,59 +256,18 @@
 		\caption{Fragment przebiegu w programie Wireshark}
 	\end{figure*}
 
-	
-	
 	\pagebreak
 	\section{Podsumowanie}
-	\par Projektu nie udało się dokończyć z powodu braku zaangażowania ze strony współautora pracy. Ukończono prace nad serwerem, protokołami komunikacyjnymi, szyfrowaniem połączeń. Brakuje aplikacji klienta i obsługi dźwięku.
-			
-	\section{Podział pracy}
-	
-	\begin{table*}[h!]
-		\begin{center}
-			\label{tab:table1}
-			\begin{tabular}{|p{.3\textwidth}|p{.6\textwidth}|}
-				
-				\hline
-				\multirow{3}{*}{\large\textbf{Juliusz Horowski}} & aplikacja klienta (w tym GUI) - nie zrobiono\\
-				\cline{2-2} & obsługa dźwięku - nie zrobiono \\
-				\cline{2-2} & sprawozdanie końcowe \\
-				\hline
-				\multirow{5}{*}{\large\textbf{Marcin Złotek}} & aplikacja serwera \\
-				\cline{2-2} & protokoły komunikacyjne \\
-				\cline{2-2} & mechanizm logowania i rejestracji \\
-				\cline{2-2} & szyfrowanie komunikacji klient-serwer \\
-				\cline{2-2} & sprawozdanie końcowe \\
-				\hline
-
-			\end{tabular}
-		\end{center}
-	\end{table*}
-	
+	\par Udało się zrealizować projekt w kształcie opisanym w rozdziale 1. System umożliwia nagranie wiadomości głosowej dla innej osoby, do późniejszego odtworzenia.
+		
 	\subsection{Cele zrealizowane}
-	\par Udało się zrealizować własne protokoły realizujące zadania obsługi użytkowników i połączeń. Jeśli chodzi o aplikacje klienta to zostało ukończone częściowo GUI oraz teoretyczne założenia dotyczące działania. Chodzi m.in. o diagramy UML komunikacji, klas itp. 
-	
-	\subsection{Cele niezrealizowane}
-	\par Nie udało się ukończyć projektu ze powodu braku współpracy ze współautorem projektu. 
+	\par Udało się zrealizować własne protokoły realizujące zadania obsługi użytkowników. Aplikacja klienta umożliwia nagrywanie i odsłuchanie wiadomości głosowych. 
 	
 	\subsection{Problemy}
-	Podczas tworzenia aplikacji napotkaliśmy na trudności:
+	Podczas tworzenia aplikacji napotkałem na trudności:
 	\begin{itemize}
 		\item problem z implementacją szyfrowanej komunikacji z serwerem przy pomocy protokołu SSL,
-		\item brak współpracy.
+		\item problemy z działaniem biblioteki NAudio.
 	\end{itemize}
-	
-	\subsection{Perspektywy rozwoju}
-	\par Przede wszystkim dokończenie projektu. Następnie perspektywy rozwoju, które zwiększą funkcjonalność systemu:
-	\begin{itemize}
-		\item rozszerzenie funkcjonalności rejestracji/logowania o możliwość odzyskiwania zapomnianego hasła,
-		\item rozszerzenie funkcjonalności administratora po zalogowaniu.
-	\end{itemize}
-
-	\subsection{Dokończenie samodzielne}
-	\par Z powodów omówionych wcześniej, funkcjonalność systemu została ograniczona. W nowym kształcie system spełnia funkcję poczty głosowej. Można z jego pomocą nagrać dla kogoś wiadomość. Następnie ta osoba logując się może sprawdzić ilość nieodebranych wiadomości oraz je odsłuchać. Nagrania po odsłuchaniu są usuwane z serwera. Pojedynczą wiadomość można wysłać do jednej osoby.
-	\par Tylko osoba do której została wysłana wiadomość, może ją odsłuchać.
-	\par Funkcje związane z logowaniem/wylogowaniem pozostają bez zmian.
-	
 	
 \end{document}
