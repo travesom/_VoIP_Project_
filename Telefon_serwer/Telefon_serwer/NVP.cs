@@ -80,7 +80,7 @@ namespace Protocols
         /// <param name="msg">input string</param>
         public void encodeMsg(string msg)
         {
-            Regex regrCol = new Regex(@"([a-z]+)#'([0-9A-Za-z_\-\.\:\s\{\}@]*)'\s*");
+            Regex regrCol = new Regex(@"([a-z]+)#'([0-9A-Za-z_\-\.\:\s\{\}]*)'\s*");
             MatchCollection m1;
             m1 = regrCol.Matches(msg);
             foreach (Match e in m1)
