@@ -30,8 +30,13 @@ namespace Telefon_serwer
         public static ConnectionsList connectList = new ConnectionsList();
         public static UserAccountList uaList = new UserAccountList();
 
+<<<<<<< HEAD
         public static StreamWriter LogRegister;
         public static X509Certificate2 serverCertificate = null; 
+=======
+        public static StreamWriter LogRegister = new StreamWriter("first_log.log");
+        public static X509Certificate serverCertificate = null; 
+>>>>>>> parent of 195e0f6... fixed bugs, improve certificeates management
 
         static async Task loginTask(string ipAddr)
         {             
@@ -48,7 +53,6 @@ namespace Telefon_serwer
                 }
                 catch(Exception)
                 {
-                    //Console.WriteLine(ex.Message);
                     await LogRegister.WriteLineAsync(DateTime.Now + ": SSL: failed to authenticate");
                 }
                 Random r1 = new Random();
@@ -66,6 +70,7 @@ namespace Telefon_serwer
                         switch (frame.OperationType)
                         {
                             case ulpOperation.LOGIN:
+<<<<<<< HEAD
                                 {
 
                                     string login=""; 
@@ -88,15 +93,17 @@ namespace Telefon_serwer
                                         await LogRegister.WriteLineAsync(DateTime.Now + ": Protocol: " + "error: wrong dataframe");
                                         goto labelSend;
                                     }
+=======
+                                {                     
+                                    var login = data.Split(' ')[0];
+                                    var passwd = data.Split(' ')[1];
+>>>>>>> parent of 195e0f6... fixed bugs, improve certificeates management
                                     byte[] hash;
-                                    
                                     using (SHA256 sha256 = SHA256.Create())
                                     {
                                         hash = sha256.ComputeHash(Encoding.ASCII.GetBytes(passwd));
                                     }
-                                    
                                     int result = uaList.login(login, Convert.ToBase64String(hash));
-                                    
                                     if (result==0)
                                     {
                                         if (asList.add(login, new SubscriberItem(((IPEndPoint)client.Client.RemoteEndPoint), nvcpOperStatus.READY, DateTime.Now)) == 0)
@@ -123,11 +130,13 @@ namespace Telefon_serwer
                                         sendFrame.OperationStatus = ulpOperStatus.WRONG_LOGIN;
                                         await LogRegister.WriteLineAsync(DateTime.Now + ": Account: error: there is no account ID: " + login);
                                     }
+                                    
                                 }
                                 break;
 
                             case ulpOperation.REGISTER:
                                 {
+<<<<<<< HEAD
                                     string login = "";
                                     string passwd = "";
                                     string nickname = "null";
@@ -154,6 +163,10 @@ namespace Telefon_serwer
                                         await LogRegister.WriteLineAsync(DateTime.Now + ": Protocol: " + "error: wrong dataframe");
                                         goto labelSend;
                                     }
+=======
+                                    var login = data.Split(' ')[0];
+                                    var passwd = data.Split(' ')[1];
+>>>>>>> parent of 195e0f6... fixed bugs, improve certificeates management
                                     byte[] hash;
                                     using (SHA256 sha256 = SHA256.Create())
                                     {
@@ -163,6 +176,7 @@ namespace Telefon_serwer
                                         {
                                             sendFrame.OperationStatus = ulpOperStatus.SUCCESS;
                                             await LogRegister.WriteLineAsync(DateTime.Now + ": Account: " + "succesfully registered: " + login);
+                                            //uaList.writeToXML();
                                         }
                                     else
                                         {
@@ -222,6 +236,7 @@ namespace Telefon_serwer
                                                             asList[tab[0]].Token = rnd;
                                                             sendFrame.data = rnd.ToString();
                                                             sendFrame.OperationStatus = ulpOperStatus.SUCCESS;
+                                                            //uaList.writeToXML();
                                                             await LogRegister.WriteLineAsync(DateTime.Now + ": Account: " + "succesfully changed nick");
                                                         }
                                                         else
@@ -520,10 +535,11 @@ namespace Telefon_serwer
                 await sslClient.ReadAsync(buffer, 0, buffer.Length).ContinueWith(
                     async (lenght) =>
                     {
-                        // 'login' 'token' 
+                        // 'login' 
                         var tab = Encoding.ASCII.GetString(buffer).Split(' ');
-                        if (tab.Length == 2)
+                        if (tab.Length != 2)
                         {
+<<<<<<< HEAD
                             if (asList.exist(tab[0]))
                                 {
                                 if (asList[tab[0]].Token == int.Parse(tab[1]))
@@ -563,6 +579,14 @@ namespace Telefon_serwer
                             string s = "error";
                             await sslClient.WriteAsync(Encoding.ASCII.GetBytes(s), 0, s.Length);
                         }
+=======
+                            if (asList[tab[0]].Token == int.Parse(tab[1]))
+                            {
+                                byte[] xmlFile = File.ReadAllBytes(tab[0] + "_contact.xml");
+                                await sslClient.WriteAsync(xmlFile, 0, xmlFile.Length);
+                            }
+                        }               
+>>>>>>> parent of 195e0f6... fixed bugs, improve certificeates management
                     });
             }
         }
@@ -589,7 +613,6 @@ namespace Telefon_serwer
         {
             while(true)
             {
-                Console.Write("\nZ:\\> ");
                 string line = Console.ReadLine();
                 var tab = line.Split(' ');
                 switch(tab[0])
@@ -704,6 +727,7 @@ namespace Telefon_serwer
                             }
                         }
                         break;
+<<<<<<< HEAD
 
                     case "delete":
                         {
@@ -872,6 +896,16 @@ namespace Telefon_serwer
                                 Console.WriteLine("> shutdown <return code>");
                                 Console.WriteLine("> help <command>");
                             }
+=======
+                    case "help":
+                        {
+                            Console.WriteLine("Simple server dev console help:");
+                            Console.WriteLine("> get [account | subscriber] [<name> | --all] ");
+                            Console.WriteLine("> time");
+                            Console.WriteLine("> info");
+                            Console.WriteLine("> shutdown <return code>");
+                            Console.WriteLine("> help -> to see this helpdesk");
+>>>>>>> parent of 195e0f6... fixed bugs, improve certificeates management
                         }
                         break;
                     case "info":
@@ -879,9 +913,8 @@ namespace Telefon_serwer
                             Console.WriteLine("------< VoIP Server >------");
                             Console.WriteLine("Simple asynchronous server provides VoIP connections. \n");
                             Console.WriteLine("Github project:\n> https://github.com/travesom/_VoIP_Project_ \n");
-                            Console.WriteLine("Version 1.03a \n");
-                            Console.WriteLine("Certificate thumbprint:");
-                            Console.WriteLine(serverCertificate.Thumbprint);
+                            Console.WriteLine("Version 1.01a \n");
+
                         }
                         break;
                     case "time":
@@ -903,8 +936,11 @@ namespace Telefon_serwer
                                      
                         }
                         break;
+<<<<<<< HEAD
                     case "clear": Console.Clear();break;
                     case "cd": Console.WriteLine("Not this time"); break;
+=======
+>>>>>>> parent of 195e0f6... fixed bugs, improve certificeates management
                     default: Console.WriteLine("error"); break;
                 }
             }
@@ -949,11 +985,20 @@ namespace Telefon_serwer
             saveXml.Change(0, 60000);
 
 
+<<<<<<< HEAD
             // ---------------------< GENERATE X.509 CERTIFICATE >-----------------------
+=======
+            // GENERATE X.509 CERTIFICATE
+            //Console.WriteLine(edcCurve.CurveType);
+
+            //ECCurve curve = ECCurve.NamedCurves.nistP256;
+            //ECDsa edcKey = ECDsa.Create(curve);
+>>>>>>> parent of 195e0f6... fixed bugs, improve certificeates management
             /*
             RSA rsa = RSA.Create(2048);
             X500DistinguishedName name = new X500DistinguishedName("CN=TIPserver");
             CertificateRequest certReq = new CertificateRequest(name, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+<<<<<<< HEAD
             X509Store general = new X509Store(StoreName.Root, StoreLocation.LocalMachine);
             general.Open(OpenFlags.ReadOnly);
             X509Certificate2Collection coll = general.Certificates.Find(X509FindType.FindByIssuerName, "Zlociu Cert Root", false);
@@ -961,6 +1006,16 @@ namespace Telefon_serwer
             X509Certificate2 X509cert = certReq.Create(coll[0], DateTime.Now, DateTime.Now.AddYears(1), numSer);
 
             File.WriteAllBytes("ServerCertificateNew.pfx", X509cert.Export(X509ContentType.Pfx, (string)null));
+=======
+            X509Certificate2 X509cert = certReq.CreateSelfSigned(DateTime.Now.AddDays(-1), DateTime.Now.AddYears(1));
+            /*
+            File.WriteAllBytes("ServerCertificateNew.pfx", X509cert.Export(X509ContentType.Pkcs12, (string)null));
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine("-----BEGIN CERTIFICATE-----");
+            builder.AppendLine(Convert.ToBase64String(X509cert.Export(X509ContentType.Cert), Base64FormattingOptions.InsertLineBreaks));
+            builder.AppendLine("-----END CERTIFICATE-----");
+            File.WriteAllText("ServerCertificate.cer", builder.ToString());
+>>>>>>> parent of 195e0f6... fixed bugs, improve certificeates management
             */
             /*
             using (Process p = new Process())
@@ -968,10 +1023,9 @@ namespace Telefon_serwer
                 p.StartInfo = new ProcessStartInfo
                 {
                     WindowStyle = ProcessWindowStyle.Hidden,
-                    FileName = @"C:\Program Files (x86)\Windows Kits\10\bin\x86\makecert.exe",
-                    Arguments = "-n \"CN=TIPserver,O=Zlociu_cert,OU=Poznan University of Techonology,C=PL\" -pe -sr LocalMachine -a sha256 -m 12 -r -len 2048 -ss My ",
-                    UseShellExecute = false,
-                    Verb = "runas"  
+                    FileName = @"C:\Program Files(x86)\Windows Kits\10\bin\x86 > makecert.exe ",
+                    Arguments = "-n \"CN=TIPserver,O=Zlociu_cert,OU=Poznan University of Techonology,C=PL\" -pe  -sr LocalMachine -a sha256 -m 12 -r -len 2048 -ss My ",
+                    UseShellExecute = false
                 };
                 p.Start();
             }
@@ -979,15 +1033,19 @@ namespace Telefon_serwer
 
             X509Store store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
             store.Open(OpenFlags.ReadOnly);
+<<<<<<< HEAD
             X509Certificate2Collection col = store.Certificates.Find(X509FindType.FindByIssuerName, "Zlociu Cert Root", true).Find(X509FindType.FindByTimeValid,DateTime.Now,false);
+=======
+            X509Certificate2Collection col = store.Certificates.Find(X509FindType.FindByIssuerName, "Zlociu_cert", false).Find(X509FindType.FindByTimeValid,DateTime.Now,false);
+>>>>>>> parent of 195e0f6... fixed bugs, improve certificeates management
             //X509Certificate2Collection col = store.Certificates;
             //foreach( X509Certificate2 cert in col)
             //{
             //    Console.WriteLine(cert.Thumbprint);
             //}
 
-            Console.WriteLine("Server certificate {0}", (col[0].NotBefore < DateTime.Now && col[0].NotAfter > DateTime.Now) ? "is valid" :"is invalid");
-            if (col.Count != 0) serverCertificate = new X509Certificate2(col[0]);
+            //Console.WriteLine(col[0].IssuerName.Name);
+            if (col.Count != 0) serverCertificate = new X509Certificate(col[0]);
             //else Console.WriteLine("nie ma");
 
             // -------------------------------< START TASKS >-----------------------------------
