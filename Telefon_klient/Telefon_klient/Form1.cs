@@ -19,6 +19,8 @@ namespace Telefon_klient
         public Int32 _voice_port = 8087;
         public Int32 _control_port = 8088;
         public Int32 _xml_port = 8089;
+        public static String serverName=null;
+        public static String machineName=null;
         public IPAddress server_addres = IPAddress.Parse("127.0.0.1");
         public Form1()
         {
@@ -31,8 +33,30 @@ namespace Telefon_klient
          </summary>
         */
         private ULP send_login_data(ulpOperation operation, Int32 port) {
-            server_addres = IPAddress.Parse(txt_server_add.Text);
-            TcpClient client = new TcpClient(server_addres.ToString(), port);
+            machineName=txt_server_add.Text;
+            TcpClient client = new TcpClient(machineName, port);
+            SslStream sslStream = new SslStream(
+                client.GetStream(),
+                false,
+                new RemoteCertificateValidationCallback(ValidateServerCertificate),
+                null
+                );
+            try
+            {
+                sslStream.AuthenticateAsClient(serverName);
+            }
+            catch (AuthenticationException e)
+            {
+                Console.WriteLine("Exception: {0}", e.Message);
+                if (e.InnerException != null)
+                {
+                    Console.WriteLine("Inner exception: {0}", e.InnerException.Message);
+                }
+                Console.WriteLine("Authentication failed - closing the connection.");
+                client.Close();
+                
+            }
+
             ULP sendFrame = new ULP(operation, txt_login.Text + ' ' + txt_pass.Text);
             byte[] sendBytes = Encoding.ASCII.GetBytes(sendFrame.ToString());
 
