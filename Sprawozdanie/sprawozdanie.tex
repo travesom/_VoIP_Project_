@@ -87,7 +87,7 @@
 	\begin{itemize}
 		\item informowanie o dostępności użytkownika (dostępny, niedostępny, nie przeszkadzać),
 		\item informowanie użytkownika o błędach w komunikacji,
-		\item umożliwienie nawiązania połączenia, 
+		\item umożlwienie nawiązania połączenia, 
 		\item utrzymanie połączenia, 
 		\item przechowywanie listy kontaktów, 
 		\item przechowywanie informacji dotyczącej użytkowników (hasła, pseudonimy),
@@ -102,7 +102,6 @@
 	\begin{itemize}
 		\item zalogowanie się na serwer,
 		\item sprawdzenia aktualnie zalogowanych użytkowników,
-		\item usuwanie kont użytkowników,
 		\item sprawdzenie logów z powiadomieniami serwera,
 		\item wyłączenia serwera.
 	\end{itemize}
@@ -112,7 +111,6 @@
 	\begin{itemize}
 		\item system musi posiadać serwer wielowątkowy,
 		\item serwer posiada stały, znany aplikacji klienckiej, adres IP,
-		\item hasło służące do zalogowania administratora na serwerze musi być niewidoczne podczas wpisywania,
 		\item aplikacja użytkownika posiada graficzny interfejs użytkownika,
 		\item aplikacja użytkownika powinna umożliwić wybór jednego z motywów graficznych: ciemny, jasny,
 		\item komunikacja klient-serwer jest szyfrowana przy pomocy SSL/TLSv1.2,
@@ -122,16 +120,16 @@
 		\item czas przesyłu informacji pomiędzy użytkownikami nie powiniem być dłuższy niż 2 sekundy,
 		\item system musi działać na systemie operacyjnym Windows 10 lub nowszym,
 		\item system powinien przechowywać hasła w postaci skrótu utworzonego funkcją SHA-256,
-		\item system powinien obliczać czas połączenia z dokładnością do 1 sekundy,
+		\item system powiniem obliczać czas połączenia z dokładnością do 1 sekundy,
 		\item system wymaga połączenia internetowego o przepustowości 100kB/s (kilobajtów na sekundę) i większej,
 		\item system nie powinien retransmitować danych dźwiękowych,
-		\item nazwą identyfikacyjną użytkownika jest jego adres e-mail,
+		\item nazwą identifykacyjną użytkownika jest jego adres e-mail,
 		\item nazwa identyfikacyjna użytkownika musi być unikalna, 
 		\item dane dotyczące użytkowników powinne być przechowywane w plikach XML.
 	\end{itemize}
 	
 	\section{Narzędzia, środowisko, biblioteki}
-	\par Zbiór używanych do stworzenia projektu narzędzi i bibliotek. Wymienione zostały także używane środowiska programistyczne (\textit{IDE}), które umożliwiły stworzenie całego systemu. 
+	\par Zbiór używanych do stworzenia projektu narzędzi i biliotek. Wymienione zostały także używane środowiska programistyczne (\textit{IDE}), które umożliwiły stworzenie całego systemu. 
 	\begin{itemize}
 		\item Narzędzia
 		\begin{itemize}
@@ -140,9 +138,9 @@
 			\item LINQ.
 		\end{itemize}
 	
-		\item Środowisko
+		\item \'Srodowisko
 		\begin{itemize}
-			\item MS Visual Studio 2015 oraz 2019,
+			\item MS Visual Studio,
 			\item RawCap,
 			\item Wireshark
 			\item MS Visio 2016 
@@ -232,32 +230,6 @@
 		\end{center}
 		\caption{Ekran główny}
 	\end{figure*}
-	\pagebreak
-	
-	\par Poniżej umieszczono zrzuty ekranu konsoli serwera. Przedstawiono przykładowe komendy dostępne dla administratora po zalogowaniu się. Hasło logowania nie pojawia się przy wpisywaniu, jest ot zabieg celowy.
-	\begin{figure*}[h!]
-		\begin{center}
-			\includegraphics*[width=.9\textwidth]{serwer_1.png}
-		\end{center}
-		\caption{Konsola serwera}
-	\end{figure*}
-	
-	\pagebreak
-	\begin{figure*}[h!]
-		\begin{center}
-			\includegraphics*[width=.8\textwidth]{serwer_2.png}
-		\end{center}
-		\caption{Konsola serwera}
-	\end{figure*}
-	
-	\begin{figure*}[h!]
-		\begin{center}
-			\includegraphics*[width=.8\textwidth]{serwer_3.png}
-		\end{center}
-		\caption{Konsola serwera}
-	\end{figure*}
-	
-	
 	
 	\pagebreak
 	\section{Testy i przebiegi}
@@ -291,7 +263,7 @@
 	
 	\pagebreak
 	\section{Podsumowanie}
-	\par Projektu nie udało się dokończyć z powodu braku zaangażowania ze strony współautora pracy. Ukończono prace nad serwerem, protokołami komunikacyjnymi, szyfrowaniem połączeń. Brakuje aplikacji klienta i obsługi dźwięku.
+	\par Projektu nie udało się dokończyć z powodu braku zaangażowania ze strony współautora pracy. Ukończono prace nad serwerem, protokołami komunikacyjnymi, szyfrowanie połaczeń. Brakuje aplikacji klienta i obsługi dźwięku.
 			
 	\section{Podział pracy}
 	
@@ -326,14 +298,14 @@
 	Podczas tworzenia aplikacji napotkaliśmy na trudności:
 	\begin{itemize}
 		\item problem z implementacją szyfrowanej komunikacji z serwerem przy pomocy protokołu SSL,
-		\item brak współpracy.
+		\item brak współpracy 
 	\end{itemize}
 	
 	\subsection{Perspektywy rozwoju}
 	\par Przede wszystkim dokończenie projektu. Następnie perspektywy rozwoju, które zwiększą funkcjonalność systemu:
 	\begin{itemize}
 		\item rozszerzenie funkcjonalności rejestracji/logowania o możliwość odzyskiwania zapomnianego hasła,
-		\item rozszerzenie funkcjonalności administratora po zalogowaniu.
+		\item rozszerzenie funkcjonalności administratora po zalogowaniu,
 	\end{itemize}
 	
 	
