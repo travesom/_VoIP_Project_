@@ -23,12 +23,12 @@ namespace Telefon_klient
         public Int32 _voice_port = 8087;
         public Int32 _control_port = 8088;
         public Int32 _xml_port = 8089;
-        public static String serverName="TIPserver";
+        public static String serverName=null;
         public static String machineName=null;
         public IPAddress server_addres = IPAddress.Parse("127.0.0.1");
         public Form1()
         {
-            serverName = "TIPserver";
+            
             InitializeComponent();
         }
 
@@ -37,9 +37,8 @@ namespace Telefon_klient
          </summary>
         */
         private ULP send_login_data(ulpOperation operation, Int32 port) {
-            machineName = txt_server_add.Text;
-            TcpClient client = new TcpClient(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 0));
-            client.Connect(server_addres, 8086);
+            machineName=txt_server_add.Text
+            TcpClient client = new TcpClient(machineName, port);
             SslStream sslStream = new SslStream(
                 client.GetStream(),
                 false,
