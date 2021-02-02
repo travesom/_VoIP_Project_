@@ -31,35 +31,8 @@ namespace Telefon_klient
          </summary>
         */
         private ULP send_login_data(ulpOperation operation, Int32 port) {
-<<<<<<< HEAD
-            machineName=txt_server_add.Text;
-            TcpClient client = new TcpClient(machineName, port);
-            SslStream sslStream = new SslStream(
-                client.GetStream(),
-                false,
-                new RemoteCertificateValidationCallback(ValidateServerCertificate),
-                null
-                );
-            try
-            {
-                sslStream.AuthenticateAsClient(serverName);
-            }
-            catch (AuthenticationException e)
-            {
-                Console.WriteLine("Exception: {0}", e.Message);
-                if (e.InnerException != null)
-                {
-                    Console.WriteLine("Inner exception: {0}", e.InnerException.Message);
-                }
-                Console.WriteLine("Authentication failed - closing the connection.");
-                client.Close();
-                
-            }
-
-=======
             server_addres = IPAddress.Parse(txt_server_add.Text);
             TcpClient client = new TcpClient(server_addres.ToString(), port);
->>>>>>> parent of 510a5c8... ssl_test
             ULP sendFrame = new ULP(operation, txt_login.Text + ' ' + txt_pass.Text);
             byte[] sendBytes = Encoding.ASCII.GetBytes(sendFrame.ToString());
 
