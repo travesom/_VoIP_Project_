@@ -10,9 +10,12 @@ using System.Security.Cryptography;
 using System.Net.Sockets;
 using Protocols;
 using System.Diagnostics;
+<<<<<<< HEAD
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using System.Text.RegularExpressions;
+=======
+>>>>>>> parent of 4010b88... add ssl encryption
 
 namespace Telefon_serwer
 {
@@ -35,8 +38,12 @@ namespace Telefon_serwer
         public static X509Certificate2 serverCertificate = null; 
 =======
         public static StreamWriter LogRegister = new StreamWriter("first_log.log");
+<<<<<<< HEAD
         public static X509Certificate serverCertificate = null; 
 >>>>>>> parent of 195e0f6... fixed bugs, improve certificeates management
+=======
+        
+>>>>>>> parent of 4010b88... add ssl encryption
 
         static async Task loginTask(string ipAddr)
         {             
@@ -45,20 +52,10 @@ namespace Telefon_serwer
             while (true)
             {
                 TcpClient client = await server.AcceptTcpClientAsync();
-                SslStream sslClient = new SslStream(client.GetStream(), false);
-                try
-                {
-                    sslClient.AuthenticateAsServer(serverCertificate, false, false);
-                    //Console.WriteLine("Uwierzyleniono");
-                }
-                catch(Exception)
-                {
-                    await LogRegister.WriteLineAsync(DateTime.Now + ": SSL: failed to authenticate");
-                }
                 Random r1 = new Random();
                 byte[] buffer = new byte[1500];
                 //Console.WriteLine(client.Client.RemoteEndPoint.ToString());
-                await sslClient.ReadAsync(buffer, 0, buffer.Length).ContinueWith(
+                await client.GetStream().ReadAsync(buffer, 0, buffer.Length).ContinueWith(
                     async (lenght) =>
                     {
                         ULP frame = new ULP(Encoding.ASCII.GetString(buffer, 0, lenght.Result));
@@ -278,7 +275,7 @@ namespace Telefon_serwer
                         }
                         labelSend:
                         byte[] sendBytes = Encoding.ASCII.GetBytes(sendFrame.ToString());
-                        await sslClient.WriteAsync(sendBytes, 0, sendBytes.Length);
+                        await client.GetStream().WriteAsync(sendBytes, 0, sendBytes.Length);
                     });
             }
         }
@@ -308,19 +305,9 @@ namespace Telefon_serwer
             while (true)
             {
                 TcpClient client = await server.AcceptTcpClientAsync();
-                SslStream sslClient = new SslStream(client.GetStream(), false);
-                try
-                {
-                    sslClient.AuthenticateAsServer(serverCertificate, false, false);
-                    //Console.WriteLine("Uwierzyleniono");
-                }
-                catch (Exception)
-                {
-                    await LogRegister.WriteLineAsync(DateTime.Now + ": SSL: failed to authenticate");
-                }
                 Random r1 = new Random();
                 byte[] buffer = new byte[1500];
-                await sslClient.ReadAsync(buffer, 0, buffer.Length).ContinueWith(
+                await client.GetStream().ReadAsync(buffer, 0, buffer.Length).ContinueWith(
                     async (lenght) =>
                     {
                         NVCP frame = new NVCP(Encoding.ASCII.GetString(buffer, 0, lenght.Result));
@@ -399,18 +386,8 @@ namespace Telefon_serwer
                                                         asList[other_login].Token = rng2;
 
                                                         TcpClient second = new TcpClient(asList[other_login].Address);
-                                                        SslStream sslClient2 = new SslStream(second.GetStream(), false);
-                                                        try
-                                                        {
-                                                            sslClient2.AuthenticateAsServer(serverCertificate, false, false);
-                                                            //Console.WriteLine("Uwierzyleniono");
-                                                        }
-                                                        catch (Exception)
-                                                        {
-                                                            await LogRegister.WriteLineAsync(DateTime.Now + ": SSL: failed to authenticate");
-                                                        }
                                                         var sendBytes2 = Encoding.ASCII.GetBytes(sendFrame2.ToString());
-                                                        await sslClient2.WriteAsync(sendBytes2, 0, sendBytes2.Length);
+                                                        await second.GetStream().WriteAsync(sendBytes2, 0, sendBytes2.Length);
                                                     }
                                                     else
                                                     {
@@ -508,7 +485,7 @@ namespace Telefon_serwer
                         }
 
                         byte[] sendBytes = Encoding.ASCII.GetBytes(sendFrame.ToString());
-                        await sslClient.WriteAsync(sendBytes, 0, sendBytes.Length);                      
+                        await client.GetStream().WriteAsync(sendBytes, 0, sendBytes.Length);                      
                     });
             }
         }
@@ -520,23 +497,14 @@ namespace Telefon_serwer
             while (true)
             {
                 TcpClient client = await server.AcceptTcpClientAsync();
-                SslStream sslClient = new SslStream(client.GetStream(), false);
-                try
-                {
-                    sslClient.AuthenticateAsServer(serverCertificate, false, false);
-                    //Console.WriteLine("Uwierzyleniono");
-                }
-                catch (Exception)
-                {
-                    await LogRegister.WriteLineAsync(DateTime.Now + ": SSL: failed to authenticate");
-                }
                 Random r1 = new Random();
                 byte[] buffer = new byte[1500];
-                await sslClient.ReadAsync(buffer, 0, buffer.Length).ContinueWith(
+                await client.GetStream().ReadAsync(buffer, 0, buffer.Length).ContinueWith(
                     async (lenght) =>
                     {
                         // 'login' 
                         var tab = Encoding.ASCII.GetString(buffer).Split(' ');
+<<<<<<< HEAD
                         if (tab.Length != 2)
                         {
 <<<<<<< HEAD
@@ -585,6 +553,12 @@ namespace Telefon_serwer
                                 byte[] xmlFile = File.ReadAllBytes(tab[0] + "_contact.xml");
                                 await sslClient.WriteAsync(xmlFile, 0, xmlFile.Length);
                             }
+=======
+                        if (asList[tab[0]].Token == int.Parse(tab[1]))
+                        { 
+                            byte[] xmlFile = File.ReadAllBytes(tab[0] + "_contact.xml");
+                            await client.GetStream().WriteAsync(xmlFile, 0, xmlFile.Length);
+>>>>>>> parent of 4010b88... add ssl encryption
                         }               
 >>>>>>> parent of 195e0f6... fixed bugs, improve certificeates management
                     });
@@ -983,6 +957,7 @@ namespace Telefon_serwer
 
             Timer saveXml = new Timer(new TimerCallback(updateAccountList));
             saveXml.Change(0, 60000);
+<<<<<<< HEAD
 
 
 <<<<<<< HEAD
@@ -1049,6 +1024,21 @@ namespace Telefon_serwer
             //else Console.WriteLine("nie ma");
 
             // -------------------------------< START TASKS >-----------------------------------
+=======
+            /*
+            UserContactList ucList = new UserContactList("Marcin");
+            ucList.add("Lukasz", new ContactItem(nick: uaList["Lukasz"]));
+            ucList.add("Juliusz", new ContactItem(nick: uaList["Juliusz"], pin: true));
+            ucList.writeToXML();
+
+            UserContactList ucList2 = UserContactList.readFromXML("Marcin");
+            foreach (var elem in ucList2.ContactList)
+            {
+                Console.WriteLine("{0} {1}", elem.Key, elem.Value.ToString());
+            }
+            */
+            
+>>>>>>> parent of 4010b88... add ssl encryption
             LogRegister.AutoFlush = true;
             string ipAddr = args[0];
             Console.WriteLine("Server is running on IP address: {0}", args[0]);
