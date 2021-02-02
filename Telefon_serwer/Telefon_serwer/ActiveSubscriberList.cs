@@ -110,24 +110,6 @@ namespace Telefon_serwer
             return 1;
         }
 
-
-        /// <summary>
-        /// Removes all subscribers
-        /// </summary>
-        /// <returns>0 if ok, 1 if error</returns>
-        public int clear()
-        {
-            try
-            {
-                subList.Clear();
-                return 0;
-            }
-            catch(Exception)
-            {
-                return 1;
-            }
-        }
-
         public SubscriberItem this[string login]
         {
             get

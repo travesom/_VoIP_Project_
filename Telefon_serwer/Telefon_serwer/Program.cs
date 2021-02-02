@@ -30,7 +30,7 @@ namespace Telefon_serwer
         public static UserAccountList uaList = new UserAccountList();
 
         public static StreamWriter LogRegister = new StreamWriter("first_log.log");
-        public static X509Certificate2 serverCertificate = null; 
+        public static X509Certificate serverCertificate = null; 
 
         static async Task loginTask(string ipAddr)
         {             
@@ -47,7 +47,6 @@ namespace Telefon_serwer
                 }
                 catch(Exception)
                 {
-                    //Console.WriteLine(ex.Message);
                     await LogRegister.WriteLineAsync(DateTime.Now + ": SSL: failed to authenticate");
                 }
                 Random r1 = new Random();
@@ -65,29 +64,15 @@ namespace Telefon_serwer
                         switch (frame.OperationType)
                         {
                             case ulpOperation.LOGIN:
-                                {
-
-                                    string login=""; 
-                                    string passwd="";
-                                    try
-                                    {
-                                        login = data.Split(' ')[0];
-                                        passwd = data.Split(' ')[1];
-                                    }
-                                    catch(Exception)
-                                    {
-                                        sendFrame.ProtocolStatus = IStatus.DATA_FAIL;
-                                        await LogRegister.WriteLineAsync(DateTime.Now + ": Protocol: " + "error: wrong dataframe");
-                                    }
+                                {                     
+                                    var login = data.Split(' ')[0];
+                                    var passwd = data.Split(' ')[1];
                                     byte[] hash;
-                                    
                                     using (SHA256 sha256 = SHA256.Create())
                                     {
                                         hash = sha256.ComputeHash(Encoding.ASCII.GetBytes(passwd));
                                     }
-                                    
                                     int result = uaList.login(login, Convert.ToBase64String(hash));
-                                    
                                     if (result==0)
                                     {
                                         if (asList.add(login, new SubscriberItem(((IPEndPoint)client.Client.RemoteEndPoint), nvcpOperStatus.READY, DateTime.Now)) == 0)
@@ -114,23 +99,14 @@ namespace Telefon_serwer
                                         sendFrame.OperationStatus = ulpOperStatus.WRONG_LOGIN;
                                         await LogRegister.WriteLineAsync(DateTime.Now + ": Account: error: there is no account ID: " + login);
                                     }
+                                    
                                 }
                                 break;
 
                             case ulpOperation.REGISTER:
                                 {
-                                    string login = "";
-                                    string passwd = "";
-                                    try
-                                    {
-                                        login = data.Split(' ')[0];
-                                        passwd = data.Split(' ')[1];
-                                    }
-                                    catch (Exception)
-                                    {
-                                        sendFrame.ProtocolStatus = IStatus.DATA_FAIL;
-                                        await LogRegister.WriteLineAsync(DateTime.Now + ": Protocol: " + "error: wrong dataframe");
-                                    }
+                                    var login = data.Split(' ')[0];
+                                    var passwd = data.Split(' ')[1];
                                     byte[] hash;
                                     using (SHA256 sha256 = SHA256.Create())
                                     {
@@ -140,6 +116,7 @@ namespace Telefon_serwer
                                         {
                                             sendFrame.OperationStatus = ulpOperStatus.SUCCESS;
                                             await LogRegister.WriteLineAsync(DateTime.Now + ": Account: " + "succesfully registered: " + login);
+                                            //uaList.writeToXML();
                                         }
                                     else
                                         {
@@ -199,6 +176,7 @@ namespace Telefon_serwer
                                                             asList[tab[0]].Token = rnd;
                                                             sendFrame.data = rnd.ToString();
                                                             sendFrame.OperationStatus = ulpOperStatus.SUCCESS;
+                                                            //uaList.writeToXML();
                                                             await LogRegister.WriteLineAsync(DateTime.Now + ": Account: " + "succesfully changed nick");
                                                         }
                                                         else
@@ -496,32 +474,16 @@ namespace Telefon_serwer
                 await sslClient.ReadAsync(buffer, 0, buffer.Length).ContinueWith(
                     async (lenght) =>
                     {
-                        // 'login' 'token' 
+                        // 'login' 
                         var tab = Encoding.ASCII.GetString(buffer).Split(' ');
-                        if (tab.Length == 2)
+                        if (tab.Length != 2)
                         {
                             if (asList[tab[0]].Token == int.Parse(tab[1]))
                             {
                                 byte[] xmlFile = File.ReadAllBytes(tab[0] + "_contact.xml");
-                                int rnd = r1.Next(1000000, 9999999);
-                                asList[tab[0]].Token = rnd;
-                                await sslClient.WriteAsync(Encoding.ASCII.GetBytes(rnd.ToString()), 0, 7);
                                 await sslClient.WriteAsync(xmlFile, 0, xmlFile.Length);
                             }
-                            else
-                            {
-                                string s = "error";
-                                await sslClient.WriteAsync(Encoding.ASCII.GetBytes(s), 0, s.Length);
-                            }
-                        } 
-                        else if (tab.Length == 3)
-                        {
-                            // 'login' 'token' 'data'
-                            if (asList[tab[0]].Token == int.Parse(tab[1]))
-                            {
-                                File.WriteAllText(tab[0] + "_contact.xml", tab[2]);
-                            }
-                        }
+                        }               
                     });
             }
         }
@@ -548,7 +510,6 @@ namespace Telefon_serwer
         {
             while(true)
             {
-                Console.Write("\nZ:\\> ");
                 string line = Console.ReadLine();
                 var tab = line.Split(' ');
                 switch(tab[0])
@@ -624,165 +585,14 @@ namespace Telefon_serwer
                             }
                         }
                         break;
-
-                    case "delete":
-                        {
-                            try
-                            {
-                                switch (tab[1])
-                                {
-                                    case "account":
-                                        {
-                                            try
-                                            {
-                                                switch (tab[2])
-                                                {
-                                                    case "--all":
-                                                        {
-                                                            uaList.clear();
-                                                        }
-                                                        break;
-                                                    case "--nologin": 
-                                                        {
-                                                            foreach(var elem in uaList)
-                                                            {
-                                                                if(!asList.exist(elem.Key))
-                                                                {
-                                                                    uaList.removeAccount(elem.Key);
-                                                                }
-                                                            }
-                                                        }
-                                                        break;
-                                                    default:
-                                                        {
-                                                            try
-                                                            {
-                                                                uaList.removeAccount(tab[2]);
-                                                            }
-                                                            catch(Exception)
-                                                            {
-                                                                Console.WriteLine("Account doesn't exist");
-                                                            }
-                                                        }
-                                                        break;
-                                                }
-                                            }
-                                            catch (Exception)
-                                            {
-                                                Console.WriteLine("get account [<name> | --all | --nologin] ");
-                                            }
-                                        }
-                                        break;
-                                    case "subscriber":
-                                        {
-                                            try
-                                            {
-                                                switch (tab[2])
-                                                {
-                                                    case "--all":
-                                                        {
-                                                            asList.clear();
-                                                        }
-                                                        break;
-                                                    case "--noactive":
-                                                        {
-                                                            foreach (var elem in asList)
-                                                            {
-                                                                if (elem.Value.Status == nvcpOperStatus.READY)
-                                                                {
-                                                                    asList.remove(elem.Key);
-                                                                }
-                                                            }
-                                                        }
-                                                        break;
-                                                    default:
-                                                        {
-                                                            try
-                                                            {
-                                                                asList.remove(tab[2]);
-                                                            }
-                                                            catch (Exception)
-                                                            {
-                                                                Console.WriteLine("Subscriber doesn't exist");
-                                                            }
-                                                        }
-                                                        break;
-                                                }
-                                            }
-                                            catch(Exception)
-                                            {
-                                                Console.WriteLine("get subscriber [<name> | --all --noactive] ");
-                                            }
-                                        }
-                                        break;
-                                    default: Console.WriteLine("error: detele [subscriber | account]"); break;
-                                }
-                            }
-                            catch(Exception)
-                            {
-                                Console.WriteLine("delete [account | subscriber]");
-                            }
-                        }
-                        break;
                     case "help":
                         {
-                            try
-                            {
-                                switch(tab[1])
-                                {
-                                    case "get":
-                                        {
-                                            Console.WriteLine("Get info about subscribers or existing accounts");
-                                            Console.WriteLine("> get account  [<name> | --all] ");
-                                            Console.WriteLine("> get subscriber [<name> | --all] ");
-                                        }
-                                        break;
-                                    case "delete":
-                                        {
-                                            Console.WriteLine("Deletes accounts or subscribers");
-                                            Console.WriteLine("> delete account [<name> | --all | --nologin]");
-                                            Console.WriteLine("> delete subscriber [<name> | --all | --noactive]");
-
-                                        }
-                                        break;
-                                    case "time":
-                                        {
-                                            Console.WriteLine("Shows current time");
-                                        }
-                                        break;
-                                    case "info":
-                                        {
-                                            Console.WriteLine("Shows info about server");
-                                        }
-                                        break;
-                                    case "shutdown":
-                                        {
-                                            Console.WriteLine("Close server with optional return value");
-                                        }
-                                        break;
-                                    default:
-                                        {
-                                            Console.WriteLine("Simple server dev console help:");
-                                            Console.WriteLine("> get [account | subscriber] [<name> | --all] ");
-                                            Console.WriteLine("> delete [account | subscriber] [<param>]");
-                                            Console.WriteLine("> time");
-                                            Console.WriteLine("> info");
-                                            Console.WriteLine("> shutdown <return code>");
-                                            Console.WriteLine("> help <command>");
-                                        }
-                                        break;
-                                }
-                            }
-                            catch(Exception)
-                            {
-                                Console.WriteLine("Simple server dev console help:");
-                                Console.WriteLine("> get [account | subscriber] [<name> | --all] ");
-                                Console.WriteLine("> delete [account | subscriber] [<param>]");
-                                Console.WriteLine("> time");
-                                Console.WriteLine("> info");
-                                Console.WriteLine("> shutdown <return code>");
-                                Console.WriteLine("> help <command>");
-                            }
+                            Console.WriteLine("Simple server dev console help:");
+                            Console.WriteLine("> get [account | subscriber] [<name> | --all] ");
+                            Console.WriteLine("> time");
+                            Console.WriteLine("> info");
+                            Console.WriteLine("> shutdown <return code>");
+                            Console.WriteLine("> help -> to see this helpdesk");
                         }
                         break;
                     case "info":
@@ -790,9 +600,8 @@ namespace Telefon_serwer
                             Console.WriteLine("------< VoIP Server >------");
                             Console.WriteLine("Simple asynchronous server provides VoIP connections. \n");
                             Console.WriteLine("Github project:\n> https://github.com/travesom/_VoIP_Project_ \n");
-                            Console.WriteLine("Version 1.03a \n");
-                            Console.WriteLine("Certificate thumbprint:");
-                            Console.WriteLine(serverCertificate.Thumbprint);
+                            Console.WriteLine("Version 1.01a \n");
+
                         }
                         break;
                     case "time":
@@ -814,7 +623,6 @@ namespace Telefon_serwer
                                      
                         }
                         break;
-                    case "cd": Console.WriteLine("Not this time"); break;
                     default: Console.WriteLine("error"); break;
                 }
             }
@@ -853,24 +661,32 @@ namespace Telefon_serwer
 
 
             // GENERATE X.509 CERTIFICATE
+            //Console.WriteLine(edcCurve.CurveType);
+
+            //ECCurve curve = ECCurve.NamedCurves.nistP256;
+            //ECDsa edcKey = ECDsa.Create(curve);
             /*
             RSA rsa = RSA.Create(2048);
             X500DistinguishedName name = new X500DistinguishedName("C=PL, OU=Zlociu, O=SigmaCore, CN=TIPserver");
             CertificateRequest certReq = new CertificateRequest(name, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
             X509Certificate2 X509cert = certReq.CreateSelfSigned(DateTime.Now.AddDays(-1), DateTime.Now.AddYears(1));
-
-            File.WriteAllBytes("ServerCertificateNew.pfx", X509cert.Export(X509ContentType.Pfx, (string)null));
-            
+            /*
+            File.WriteAllBytes("ServerCertificateNew.pfx", X509cert.Export(X509ContentType.Pkcs12, (string)null));
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine("-----BEGIN CERTIFICATE-----");
+            builder.AppendLine(Convert.ToBase64String(X509cert.Export(X509ContentType.Cert), Base64FormattingOptions.InsertLineBreaks));
+            builder.AppendLine("-----END CERTIFICATE-----");
+            File.WriteAllText("ServerCertificate.cer", builder.ToString());
+            */
             /*
             using (Process p = new Process())
             {
                 p.StartInfo = new ProcessStartInfo
                 {
                     WindowStyle = ProcessWindowStyle.Hidden,
-                    FileName = @"C:\Program Files (x86)\Windows Kits\10\bin\x86\makecert.exe",
-                    Arguments = "-n \"CN=TIPserver,O=Zlociu_cert,OU=Poznan University of Techonology,C=PL\" -pe -sr LocalMachine -a sha256 -m 12 -r -len 2048 -ss My ",
-                    UseShellExecute = false,
-                    Verb = "runas"  
+                    FileName = @"C:\Program Files(x86)\Windows Kits\10\bin\x86 > makecert.exe ",
+                    Arguments = "-n \"CN=TIPserver,O=Zlociu_cert,OU=Poznan University of Techonology,C=PL\" -pe  -sr LocalMachine -a sha256 -m 12 -r -len 2048 -ss My ",
+                    UseShellExecute = false
                 };
                 p.Start();
             }
@@ -890,15 +706,15 @@ namespace Telefon_serwer
             */
             X509Store store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
             store.Open(OpenFlags.ReadOnly);
-            X509Certificate2Collection col = store.Certificates.Find(X509FindType.FindByIssuerName, "Zlociu Cert Root", false).Find(X509FindType.FindByTimeValid,DateTime.Now,false);
+            X509Certificate2Collection col = store.Certificates.Find(X509FindType.FindByIssuerName, "Zlociu_cert", false).Find(X509FindType.FindByTimeValid,DateTime.Now,false);
             //X509Certificate2Collection col = store.Certificates;
             //foreach( X509Certificate2 cert in col)
             //{
             //    Console.WriteLine(cert.Thumbprint);
             //}
 
-            Console.WriteLine("Server certificate {0}", (col[0].NotBefore < DateTime.Now && col[0].NotAfter > DateTime.Now) ? "is valid" :"is invalid");
-            if (col.Count != 0) serverCertificate = new X509Certificate2(col[0]);
+            //Console.WriteLine(col[0].IssuerName.Name);
+            if (col.Count != 0) serverCertificate = new X509Certificate(col[0]);
             //else Console.WriteLine("nie ma");
 
             LogRegister.AutoFlush = true;
